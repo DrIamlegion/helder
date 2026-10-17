@@ -1,0 +1,8 @@
+# Regeleindes: altijd LF in de repository, zodat Windows, macOS en Linux hetzelfde bestand zien.
+* text=auto eol=lf
+
+# Binaire bestanden nooit aanraken.
+*.ico binary
+*.png binary
+*.woff2 binary
+*.exe binary

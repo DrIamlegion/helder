@@ -1,0 +1,147 @@
+# Bouwt Helder bij een tag (v0.1.7) en publiceert de installer met latest.yml.
+#
+# Ondertekening loopt via SignPath Foundation, dat open-sourcesoftware gratis ondertekent.
+# Zolang de secrets er niet zijn, bouwt de workflow gewoon ongetekend door — handig om de
+# pijplijn te testen voordat de SignPath-projecten zijn aangevraagd.
+#
+# Secrets: SIGNPATH_API_TOKEN en SIGNPATH_ORGANIZATION_ID.
+# In SignPath aan te maken: project `helder`, signing policy `release-signing` en twee
+# artifact configurations — `helder-app` (de losse bestanden uit win-unpacked) en
+# `helder-installer` (de NSIS-installer). Zie docs/code-signing-policy.md.
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  actions: read
+
+jobs:
+  release:
+    runs-on: windows-latest
+    env:
+      SIGNPATH_API_TOKEN: ${{ secrets.SIGNPATH_API_TOKEN }}
+      SIGNPATH_ORGANIZATION_ID: ${{ secrets.SIGNPATH_ORGANIZATION_ID }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      - name: Versie en tag kloppen?
+        shell: bash
+        run: |
+          versie=$(node -p "require('./package.json').version")
+          echo "package.json: $versie, tag: ${GITHUB_REF_NAME}"
+          if [[ "${GITHUB_REF_NAME}" == v* && "${GITHUB_REF_NAME}" != "v$versie" ]]; then
+            echo "Tag ${GITHUB_REF_NAME} hoort niet bij versie $versie in package.json." >&2
+            exit 1
+          fi
+
+      - name: Bouwen (frontend + types)
+        run: npm run build
+
+      # Stap 1: de app-map bouwen. Hierin zitten de bestanden die Windows vertrouwt.
+      - name: App-map bouwen
+        run: npx electron-builder --win --dir --x64
+
+      # Stap 2: de losse bestanden laten ondertekenen, zodat de installer ze al ondertekend inpakt.
+      - name: App-map inpakken
+        if: env.SIGNPATH_API_TOKEN != ''
+        shell: pwsh
+        run: Compress-Archive -Path release/win-unpacked/* -DestinationPath app-unsigned.zip -Force
+
+      - name: App-map uploaden
+        id: upload-app
+        if: env.SIGNPATH_API_TOKEN != ''
+        uses: actions/upload-artifact@v4
+        with:
+          name: helder-app-unsigned
+          path: app-unsigned.zip
+          if-no-files-found: error
+
+      - name: App-map ondertekenen
+        if: env.SIGNPATH_API_TOKEN != ''
+        uses: signpath/github-action-submit-signing-request@v3
+        with:
+          api-token: ${{ secrets.SIGNPATH_API_TOKEN }}
+          organization-id: ${{ env.SIGNPATH_ORGANIZATION_ID }}
+          project-slug: helder
+          signing-policy-slug: release-signing
+          artifact-configuration-slug: helder-app
+          github-artifact-id: ${{ steps.upload-app.outputs.artifact-id }}
+          wait-for-completion: true
+          output-artifact-directory: signed-app
+
+      - name: Ondertekende bestanden terugzetten
+        if: env.SIGNPATH_API_TOKEN != ''
+        shell: pwsh
+        run: Expand-Archive -Path (Get-ChildItem signed-app -Filter *.zip | Select-Object -First 1).FullName -DestinationPath release/win-unpacked -Force
+
+      # Stap 3: de installer bouwen bovenop de al ondertekende bestanden. In dit pad schrijft
+      # electron-builder app-update.yml niet zelf, dus doen we dat hier.
+      - name: Update-kanaal in de app-map zetten
+        run: node scripts/app-update-yml.mjs release/win-unpacked
+
+      - name: Installer bouwen
+        run: npx electron-builder --win nsis --x64 --prepackaged release/win-unpacked --publish never
+
+      # Stap 4: ook de installer zelf ondertekenen.
+      - name: Installer inpakken
+        if: env.SIGNPATH_API_TOKEN != ''
+        shell: pwsh
+        run: Compress-Archive -Path release/Helder-Setup-*.exe -DestinationPath installer-unsigned.zip -Force
+
+      - name: Installer uploaden
+        id: upload-installer
+        if: env.SIGNPATH_API_TOKEN != ''
+        uses: actions/upload-artifact@v4
+        with:
+          name: helder-installer-unsigned
+          path: installer-unsigned.zip
+          if-no-files-found: error
+
+      - name: Installer ondertekenen
+        if: env.SIGNPATH_API_TOKEN != ''
+        uses: signpath/github-action-submit-signing-request@v3
+        with:
+          api-token: ${{ secrets.SIGNPATH_API_TOKEN }}
+          organization-id: ${{ env.SIGNPATH_ORGANIZATION_ID }}
+          project-slug: helder
+          signing-policy-slug: release-signing
+          artifact-configuration-slug: helder-installer
+          github-artifact-id: ${{ steps.upload-installer.outputs.artifact-id }}
+          wait-for-completion: true
+          output-artifact-directory: signed-installer
+
+      - name: Ondertekende installer terugzetten
+        if: env.SIGNPATH_API_TOKEN != ''
+        shell: pwsh
+        run: Expand-Archive -Path (Get-ChildItem signed-installer -Filter *.zip | Select-Object -First 1).FullName -DestinationPath release -Force
+
+      # Stap 5: ondertekenen verandert de bytes, dus latest.yml moet opnieuw.
+      - name: Update-metadata opnieuw genereren
+        run: |
+          node scripts/latest-yml.mjs
+          node scripts/latest-yml.mjs --check
+
+      - name: Handtekening controleren
+        run: node scripts/verify-signature.mjs --strict
+        continue-on-error: ${{ env.SIGNPATH_API_TOKEN == '' }}
+
+      - name: Publiceren
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            release/Helder-Setup-*.exe
+            release/Helder-Setup-*.exe.blockmap
+            release/latest.yml
+          generate_release_notes: false
+          draft: false

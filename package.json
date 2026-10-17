@@ -1,0 +1,40 @@
+{
+  "name": "helder",
+  "private": true,
+  "version": "0.1.7",
+  "description": "Boekhouden zonder ruis: facturen, uitgaven, bankzaken en btw-aangifte voor zzp en mkb.",
+  "license": "AGPL-3.0-only",
+  "author": "Helder",
+  "type": "module",
+  "main": "electron/main.cjs",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview",
+    "icons": "node scripts/make-icons.mjs",
+    "desktop": "npm run build && electron .",
+    "installer": "npm run build && electron-builder --win nsis --x64",
+    "typecheck": "tsc --noEmit",
+    "sign:check": "node scripts/verify-signature.mjs",
+    "latest-yml": "node scripts/latest-yml.mjs",
+    "latest-yml:check": "node scripts/latest-yml.mjs --check",
+    "license:add": "node scripts/license-headers.mjs",
+    "license:check": "node scripts/license-headers.mjs --check"
+  },
+  "dependencies": {
+    "electron-updater": "^6.8.9",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1",
+    "react-router-dom": "^7.18.4"
+  },
+  "devDependencies": {
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "@vitejs/plugin-react": "^6.1.2",
+    "electron": "^44.9.0",
+    "electron-builder": "^26.15.3",
+    "typescript": "^7.0.2",
+    "vite": "^8.3.4",
+    "vite-plugin-pwa": "^2.0.0"
+  }
+}

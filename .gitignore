@@ -1,0 +1,17 @@
+# Afhankelijkheden en bouwresultaat
+node_modules
+dist
+release
+
+# Lokale instellingen en logs
+.env
+.env.local
+*.local
+*.log
+
+# Editors en besturingssysteem
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+*.tsbuildinfo
