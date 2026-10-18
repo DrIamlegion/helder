@@ -20,6 +20,7 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import releaseNotes from "./release-notes.cjs";
+import { bodyVoor } from "./release-body.mjs";
 import { leesVersies } from "../src/changelog-parse.ts";
 
 const { leesChangelog, notitiesUitChangelog, notitiesVoor } = releaseNotes;
@@ -115,4 +116,39 @@ for (const appRegel of leesVersies(leesChangelog())) {
   );
 }
 
-console.log(`Release-opmerkingen: ${regels.length} volledige punten voor ${versie}.`);
+// De GitHub-releasepagina krijgt dezelfde punten. Eén lijstitem per punt, in dezelfde volgorde en
+// met de opmaak intact, zodat bezoekers zonder de app hetzelfde lezen als de update-kaart.
+const body = bodyVoor(versie);
+assert.ok(body, `${versie} heeft een beschrijving voor de releasepagina`);
+assert.match(body, new RegExp(`^## Wat is er nieuw in Helder ${versie.replace(/\./g, "\\.")}$`, "m"));
+const bodyPunten = body
+  .split("\n")
+  .filter((regel) => regel.startsWith("- "))
+  .map((regel) => regel.slice(2));
+assert.deepEqual(bodyPunten, regels, "de releasepagina somt dezelfde punten op als de update-kaart");
+assert.match(
+  body,
+  /\[CHANGELOG\.md\]\(https:\/\/github\.com\/DrIamlegion\/helder\/blob\/main\/CHANGELOG\.md\)/,
+  "de releasepagina linkt naar de volledige geschiedenis"
+);
+assert.equal(bodyVoor("0.9.9"), null, "een versie zonder sectie levert geen lege pagina op");
+
+// En de workflow moet die beschrijving ook echt meesturen; anders blijft de pagina leeg.
+const releaseWorkflow = readFileSync(
+  new URL("../.github/workflows/release.yml", import.meta.url),
+  "utf8"
+);
+assert.match(
+  releaseWorkflow,
+  /body_path:\s*release\/release-body\.md/,
+  "de release-workflow zet de beschrijving op de release"
+);
+assert.match(
+  releaseWorkflow,
+  /node scripts\/release-body\.mjs/,
+  "de release-workflow maakt de beschrijving vóór het publiceren"
+);
+
+console.log(
+  `Release-opmerkingen: ${regels.length} volledige punten voor ${versie}, ook op de releasepagina.`
+);

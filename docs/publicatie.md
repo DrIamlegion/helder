@@ -102,11 +102,12 @@ repository; `package-lock.json` is met ±340 kB het grootste bestand dat meegaat
   (`scripts/test-btw.mjs`, die de app echt start op de Windows-runner), app-map bouwen en de
   hashcontrole (`scripts/verify-build.mjs`). Draai die btw-test ook lokaal met `npm test` — in CI
   staat hij vóór de inpakstap, zodat een gebroken btw-regel meteen opvalt.
-- De release-workflow draait op elke `v*`-tag: de release-opmerkingen controleren, bouwen, de
-  **btw-test** in de echte app, de app-map bouwen, app-bestanden ondertekenen, de installer
-  bouwen en ondertekenen, `latest.yml` opnieuw genereren, hash- en handtekeningscontrole, en pas
-  dan publiceren. De tests staan vóór het inpakken, zodat een gebroken btw-regel of afgekapte
-  release-opmerking geen dure ondertekeningsaanvraag kost.
+- De release-workflow draait op elke `v*`-tag: de release-opmerkingen en het updatekanaal
+  controleren, bouwen, de **btw-test** in de echte app, de app-map bouwen, app-bestanden
+  ondertekenen, de installer bouwen en ondertekenen, `latest.yml` opnieuw genereren, hash- en
+  handtekeningscontrole, de **releasepagina vullen** (`scripts/release-body.mjs` schrijft de
+  beschrijving uit de changelogpunten) en pas dan publiceren. De tests staan vóór het inpakken,
+  zodat een gebroken btw-regel of afgekapte release-opmerking geen dure ondertekeningsaanvraag kost.
 - Nieuwe versie: hoog `version` in `package.json` op, schrijf de sectie in `CHANGELOG.md`, commit,
   tag en push de tag.
 - Het updatekanaal zijn de releases van de repository zelf (`provider: github` in

@@ -486,6 +486,11 @@ keer de nieuwste installer downloaden en installeren lost dat op — daarna gaat
 [CHANGELOG.md](CHANGELOG.md) schrijven, committen, `git tag v<versie>` en de tag pushen. De
 workflow bouwt, ondertekent, controleert en publiceert; oudere installaties pikken hem vanzelf op.
 
+De **beschrijving op de releasepagina** komt uit dezelfde changelogpunten: de workflow draait
+[scripts/release-body.mjs](scripts/release-body.mjs) en zet de uitkomst als `body_path` op de
+release. Zo leest een bezoeker op GitHub hetzelfde als een gebruiker in de update-kaart. Lokaal
+de tekst bekijken kan met `npm run release:body` — dat schrijft `release/release-body.md`.
+
 **Lokaal testen zonder host**: start een statische server in `release/` en geef de app een ander
 kanaal mee. `HELDER_UPDATE_URL=http://127.0.0.1:8931` wijst de updater naar die server en
 `HELDER_UPDATE_TEST=install` installeert een gedownloade update direct (handig in een test).

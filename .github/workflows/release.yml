@@ -173,9 +173,15 @@ jobs:
         run: node scripts/verify-signature.mjs --strict
         continue-on-error: ${{ env.SIGNPATH_API_TOKEN == '' }}
 
+      # Dezelfde punten als in de update-kaart, nu als beschrijving op de releasepagina. Zonder
+      # deze stap ziet een bezoeker wel de installer, maar niet wat er veranderd is.
+      - name: Releasepagina vullen
+        run: node scripts/release-body.mjs
+
       - name: Publiceren
         uses: softprops/action-gh-release@v2
         with:
+          body_path: release/release-body.md
           files: |
             release/Helder-Setup-*.exe
             release/Helder-Setup-*.exe.blockmap
