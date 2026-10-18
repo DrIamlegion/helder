@@ -37,7 +37,12 @@ const optie = (naam) => {
   return plek >= 0 ? argumenten[plek + 1] : undefined;
 };
 
-const tag = optie("--tag") ?? process.env.GITHUB_REF_NAME ?? "";
+// Op een branch is GITHUB_REF_NAME de branchnaam (bij een pull request bijvoorbeeld
+// "123/merge"); alleen bij een tag is het de tag. De release-workflow geeft hem expliciet mee
+// met --tag, dus hier telt de omgeving alleen als GitHub zelf zegt dat het een tag is.
+const tag =
+  optie("--tag") ??
+  (process.env.GITHUB_REF_TYPE === "tag" ? process.env.GITHUB_REF_NAME ?? "" : "");
 const appMap = path.resolve(optie("--app-map") ?? path.join("release", "win-unpacked"));
 const asarPad = path.join(appMap, "resources", "app.asar");
 const problemen = [];
