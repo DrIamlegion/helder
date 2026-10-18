@@ -14,37 +14,55 @@
 // bron blijft.
 //
 //   node scripts/app-update-yml.mjs [release/win-unpacked]
-import { createRequire } from "node:module";
 import { existsSync, writeFileSync } from "node:fs";
+import { createRequire } from "node:module";
 import path from "node:path";
+import { pathToFileURL } from "node:url";
 
 const require = createRequire(import.meta.url);
-const config = require("../electron-builder.cjs");
 
-const appMap = path.resolve(process.argv[2] || path.join("release", "win-unpacked"));
-const resources = path.join(appMap, "resources");
-if (!existsSync(appMap)) {
-  console.error(`Geen app-map gevonden op ${appMap}. Bouw eerst met --dir.`);
-  process.exit(1);
+/**
+ * De regels voor app-update.yml, afgeleid van de buildconfiguratie. electron-updater leest dit
+ * bestand in de geïnstalleerde app: `provider` plus `owner`/`repo` bepalen waar hij `latest.yml`
+ * zoekt, en `publisherName` welke ondertekenaar hij accepteert.
+ */
+export function regelsVoorAppUpdate(config) {
+  const publicatie = Array.isArray(config.publish) ? config.publish[0] : null;
+  if (!publicatie || !publicatie.provider) {
+    throw new Error("Geen publish-configuratie gevonden; app-update.yml kan niet gemaakt worden.");
+  }
+
+  const regels = [`provider: ${publicatie.provider}`];
+  if (publicatie.url) regels.push(`url: ${publicatie.url}`);
+  if (publicatie.owner) regels.push(`owner: ${publicatie.owner}`);
+  if (publicatie.repo) regels.push(`repo: ${publicatie.repo}`);
+  const uitgever = (config.win && config.win.publisherName) ?? publicatie.publisherName;
+  if (uitgever) regels.push(`publisherName: ${Array.isArray(uitgever) ? uitgever[0] : uitgever}`);
+  regels.push("updaterCacheDirName: helder-updater");
+  return regels;
 }
 
-const publicatie = Array.isArray(config.publish) ? config.publish[0] : null;
-if (!publicatie || !publicatie.provider) {
-  console.error("Geen publish-configuratie in electron-builder.cjs gevonden.");
-  process.exit(1);
+export function schrijfAppUpdateYml(appMap, config) {
+  const resources = path.join(appMap, "resources");
+  if (!existsSync(appMap)) {
+    throw new Error(`Geen app-map gevonden op ${appMap}. Bouw eerst met --dir.`);
+  }
+  const regels = regelsVoorAppUpdate(config);
+  const doel = path.join(resources, "app-update.yml");
+  writeFileSync(doel, `${regels.join("\n")}\n`);
+  return { doel, regels };
 }
 
-const regels = [`provider: ${publicatie.provider}`];
-if (publicatie.url) regels.push(`url: ${publicatie.url}`);
-if (publicatie.owner) regels.push(`owner: ${publicatie.owner}`);
-if (publicatie.repo) regels.push(`repo: ${publicatie.repo}`);
-const uitgever = Array.isArray(publicatie.publisherName)
-  ? publicatie.publisherName[0]
-  : publicatie.publisherName;
-if (uitgever) regels.push(`publisherName: ${uitgever}`);
-regels.push("updaterCacheDirName: helder-updater");
-
-const doel = path.join(resources, "app-update.yml");
-writeFileSync(doel, `${regels.join("\n")}\n`);
-console.log(`app-update.yml geschreven naar ${doel}`);
-console.log(regels.map((regel) => `  ${regel}`).join("\n"));
+// Alleen uitvoeren als dit bestand direct wordt gestart, niet bij een import vanuit de test.
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
+  const config = require("../electron-builder.cjs");
+  const appMap = path.resolve(process.argv[2] || path.join("release", "win-unpacked"));
+  try {
+    const { doel, regels } = schrijfAppUpdateYml(appMap, config);
+    console.log(`app-update.yml geschreven naar ${doel}`);
+    console.log(regels.map((regel) => `  ${regel}`).join("\n"));
+  } catch (fout) {
+    console.error(fout.message);
+    process.exit(1);
+  }
+}

@@ -19,6 +19,7 @@
     "test": "npm run test:btw",
     "test:btw": "npm run build && node scripts/test-btw.mjs",
     "test:release-notes": "node scripts/test-release-notes.mjs",
+    "test:update-kanaal": "node scripts/test-update-kanaal.mjs",
     "sign:check": "node scripts/verify-signature.mjs",
     "latest-yml": "node scripts/latest-yml.mjs",
     "latest-yml:check": "node scripts/latest-yml.mjs --check",

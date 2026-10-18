@@ -6,9 +6,10 @@
 // voorwaarden van de GNU Affero General Public License, versie 3. Zie LICENSE.
 
 // Draait dezelfde controles als de CI-workflow (.github/workflows/ci.yml), in dezelfde volgorde:
-// licentieheaders, release-opmerkingen, types en frontend, de btw-test in de echte app, de
-// app-map, het update-kanaal en de hashcontrole. Stopt bij de eerste fout, zodat een gebroken
-// btw-regel of een afgekapte release-opmerking niet pas na het inpakken opvalt.
+// licentieheaders, release-opmerkingen, updatekanaal, types en frontend, de btw-test in de echte
+// app, de app-map, het update-kanaal in de app-map en de hashcontrole. Stopt bij de eerste fout,
+// zodat een gebroken btw-regel, een afgekapte release-opmerking of een kanaal waar nooit een
+// update vandaan komt niet pas na het inpakken opvalt.
 //
 //   npm run ci
 //
@@ -37,6 +38,11 @@ const stappen = [
     naam: "Release-opmerkingen",
     commando: process.execPath,
     argumenten: ["scripts/test-release-notes.mjs"],
+  },
+  {
+    naam: "Updatekanaal",
+    commando: process.execPath,
+    argumenten: ["scripts/test-update-kanaal.mjs"],
   },
   {
     naam: "Types en frontend bouwen",

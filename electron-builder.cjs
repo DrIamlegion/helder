@@ -76,17 +76,16 @@ module.exports = {
   // Helder is AGPL-3.0: de licentietekst gaat mee de installatiemap in, zodat elke
   // gebruiker hem kan lezen (Help → Licentie opent dit bestand).
   extraResources: ["LICENSE"],
-  // Het updatekanaal. Vervang dit door je eigen host (of een github-provider); met
-  // HELDER_UPDATE_URL kun je de app tijdens het testen naar een lokaal kanaal wijzen.
+  // Het updatekanaal zijn de releases van deze repository. De release-workflow zet bij elke
+  // tag `Helder-Setup-<versie>.exe`, de blockmap en `latest.yml` als assets op die release;
+  // electron-updater leest de lijst met releases en haalt `latest.yml` daar op. Zo is er geen
+  // eigen updateserver nodig. Met HELDER_UPDATE_URL kun je de app tijdens het testen naar een
+  // lokaal kanaal wijzen.
   publish: [
     {
-      provider: "generic",
-      url: "https://updates.helder.example/win",
-      // De uitgever die electron-updater bij updates controleert. Ondertekent SignPath
-      // Foundation, zet dan HELDER_SIGN_PUBLISHER op precies die naam.
-      ...(process.env.HELDER_SIGN_PUBLISHER
-        ? { publisherName: [process.env.HELDER_SIGN_PUBLISHER] }
-        : {}),
+      provider: "github",
+      owner: "DrIamlegion",
+      repo: "helder",
     },
   ],
   // Wat er in deze versie verandert, komt uit CHANGELOG.md en belandt in latest.yml; de app
@@ -106,6 +105,12 @@ module.exports = {
       },
     ],
     artifactName: "Helder-Setup-${version}.${ext}",
+    // De uitgever die electron-updater bij een update controleert. Ondertekent SignPath
+    // Foundation, zet dan HELDER_SIGN_PUBLISHER op precies die naam; zonder die variabele
+    // blijft het veld weg en controleert de updater alleen de hash.
+    ...(process.env.HELDER_SIGN_PUBLISHER
+      ? { publisherName: process.env.HELDER_SIGN_PUBLISHER }
+      : {}),
     ...(azureActief ? { azureSignOptions: azureOpties() } : {}),
   },
   nsis: {

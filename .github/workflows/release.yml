@@ -52,6 +52,11 @@ jobs:
       - name: Release-opmerkingen
         run: npm run test:release-notes
 
+      # Een verkeerd updatekanaal merkt niemand aan de build, maar elke installatie blijft dan
+      # voorgoed op zijn versie staan. Daarom vóór het inpakken al stoppen.
+      - name: Updatekanaal
+        run: npm run test:update-kanaal
+
       - name: Bouwen (frontend + types)
         run: npm run build
 

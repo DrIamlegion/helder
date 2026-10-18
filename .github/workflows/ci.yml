@@ -39,6 +39,11 @@ jobs:
       - name: Release-opmerkingen
         run: npm run test:release-notes
 
+      # Bouwt de app zonder fout als het updatekanaal een placeholder is; dan krijgt niemand
+      # ooit een update. Deze test faalt zodra het kanaal niet naar de releases wijst.
+      - name: Updatekanaal
+        run: npm run test:update-kanaal
+
       # tsc --noEmit + vite build; hieruit komt de dist/ die hieronder gecontroleerd wordt.
       - name: Types en frontend bouwen
         run: npm run build

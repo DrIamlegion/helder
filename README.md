@@ -466,16 +466,25 @@ De geïnstalleerde app werkt zichzelf bij — je hoeft nooit meer een nieuwe ins
 - Alleen de **geïnstalleerde** app kan bijwerken: `npm run desktop` meldt in Instellingen eerlijk
   "bijwerken kan alleen in de geïnstalleerde app".
 
-**Kanaal instellen.** `npm run installer` schrijft naast de installer een `latest.yml` met versie en
-sha512. Beide horen op één plek te staan die de app kan bereiken; dat adres staat in
-`publish` in [electron-builder.cjs](electron-builder.cjs) — nu een placeholder
-(`https://updates.helder.example/win`), dus vervang die door je eigen host (of door een GitHub-
-release: `{ "provider": "github", "owner": "…", "repo": "…" }`). Publiceren gaat met
-`npx electron-builder --win nsis --x64 --publish always`, of met de hand: zet
-`Helder-Setup-<versie>.exe`, `latest.yml` en het `.blockmap`-bestand op die URL.
+**Waar het kanaal staat.** Het updatekanaal zijn de **releases van deze repository**:
+`publish` in [electron-builder.cjs](electron-builder.cjs) staat op de GitHub-provider met
+`owner: DrIamlegion` en `repo: helder`, en diezelfde regels belanden via
+[scripts/app-update-yml.mjs](scripts/app-update-yml.mjs) in `app-update.yml` in de app. Bij elke
+tag zet de release-workflow `Helder-Setup-<versie>.exe`, de blockmap en `latest.yml` als assets op
+de release; `electron-updater` leest die lijst en haalt `latest.yml` daar op. Er is dus geen eigen
+updateserver en geen handmatige upload.
 
-**Nieuwe versie uitbrengen** is dan: versie in [package.json](package.json) ophogen,
-`npm run installer`, artifacts uploaden. Oudere installaties pikken hem vanzelf op.
+`npm run test:update-kanaal` bewaakt dat: wijst `publish` terug naar een voorbeeldhost, dan faalt
+de controle in de CI en vóór het inpakken, in plaats van pas maanden later bij een gebruiker die
+nooit een update ziet.
+
+**Let op bij het overstappen.** Installaties van vóór deze wijziging (0.1.8 en eerder) hebben nog
+het oude adres in hun eigen `app-update.yml`; die kunnen de nieuwe releases niet zien. Eén
+keer de nieuwste installer downloaden en installeren lost dat op — daarna gaat het vanzelf.
+
+**Nieuwe versie uitbrengen** is dan: versie in [package.json](package.json) ophogen, de sectie in
+[CHANGELOG.md](CHANGELOG.md) schrijven, committen, `git tag v<versie>` en de tag pushen. De
+workflow bouwt, ondertekent, controleert en publiceert; oudere installaties pikken hem vanzelf op.
 
 **Lokaal testen zonder host**: start een statische server in `release/` en geef de app een ander
 kanaal mee. `HELDER_UPDATE_URL=http://127.0.0.1:8931` wijst de updater naar die server en
