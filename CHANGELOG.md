@@ -4,6 +4,14 @@ Wat er per versie verandert, nieuwste bovenaan. Dit bestand is de bron: de bouw 
 notities van de huidige versie in `latest.yml`, en de app toont ze in de update-kaart
 voordat je een update installeert.
 
+## 0.1.10 — 18 oktober 2026
+
+- De desktop-app bewaart je administratie nu zelf: bij het starten en daarna hooguit elk uur
+  een leesbare kopie in de map `back-ups` in je gegevensmap. De nieuwste veertien dagen blijven
+  staan, plus de nieuwste van elke maand — samen ruim een jaar geschiedenis.
+- In Instellingen → Je gegevens zie je wanneer de laatste automatische back-up is gemaakt, en
+  open je de map met één knop. Een kopie terugzetten gaat met **Back-up terugzetten**.
+
 ## 0.1.9 — 18 oktober 2026
 
 - Helder haalt updates nu op uit de eigen releases van het project, in plaats van een adres
