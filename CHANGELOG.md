@@ -4,6 +4,14 @@ Wat er per versie verandert, nieuwste bovenaan. Dit bestand is de bron: de bouw 
 notities van de huidige versie in `latest.yml`, en de app toont ze in de update-kaart
 voordat je een update installeert.
 
+## 0.1.9 — 18 oktober 2026
+
+- Helder haalt updates nu op uit de eigen releases van het project, in plaats van een adres
+  waar nooit iets stond. Een geïnstalleerde app ziet daardoor weer nieuwe versies, en de
+  update-kaart laat ze zien voordat je installeert.
+- Gebruik je nog 0.1.8 of ouder? Installeer deze versie één keer met de hand; daarna werkt
+  bijwerken vanzelf.
+
 ## 0.1.8 — 18 oktober 2026
 
 - De update-kaart en de versiegeschiedenis tonen elk punt nu volledig. Liep een punt over
