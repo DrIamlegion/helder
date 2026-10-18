@@ -17,6 +17,7 @@ import { AUTO_DREMPELS, HERINNER_RUSTDAGEN } from "../reminders";
 import { useInstall, useOfflineGereed } from "../pwa";
 import { useUpdates } from "../desktop";
 import { download, fmtDate, todayISO } from "../lib";
+import { rechtsvormOpties, zonderBtwNummer } from "../rechtsvormen";
 import { useAppStore } from "../store";
 import type { Company } from "../types";
 
@@ -25,6 +26,12 @@ export function SettingsPage() {
   const toast = useToast();
   const navigate = useNavigate();
   const [form, setForm] = useState<Company>(() => ({ ...state.bedrijf }));
+  // Een vereniging of stichting heeft meestal geen btw-nummer; het veld verschijnt pas als de
+  // gebruiker aangeeft toch btw-plichtig te zijn.
+  const [btwPlichtig, setBtwPlichtig] = useState(
+    () => !zonderBtwNummer(state.bedrijf.rechtsvorm) || Boolean(state.bedrijf.btw)
+  );
+  const toonBtw = !zonderBtwNummer(form.rechtsvorm) || btwPlichtig;
   const [confirmingReset, setConfirmingReset] = useState(false);
   const [geschiedenisOpen, setGeschiedenisOpen] = useState(false);
   const [importError, setImportError] = useState("");
@@ -65,9 +72,23 @@ export function SettingsPage() {
     setForm((current) => ({ ...current, [key]: value }));
   }
 
+  function kiesRechtsvorm(vorm: string) {
+    setForm((huidig) => ({
+      ...huidig,
+      rechtsvorm: vorm,
+      btw: zonderBtwNummer(vorm) ? "" : huidig.btw,
+    }));
+    if (zonderBtwNummer(vorm)) setBtwPlichtig(false);
+  }
+
   function submit(event: FormEvent) {
     event.preventDefault();
-    updateCompany(form);
+    const teBewaren: Company = {
+      ...form,
+      btw: zonderBtwNummer(form.rechtsvorm) && !btwPlichtig ? "" : form.btw,
+    };
+    updateCompany(teBewaren);
+    setForm(teBewaren);
     toast("Bedrijfsgegevens opgeslagen");
   }
 
@@ -92,6 +113,9 @@ export function SettingsPage() {
         }
         importState(next);
         setForm({ ...next.bedrijf });
+        setBtwPlichtig(
+          !zonderBtwNummer(next.bedrijf.rechtsvorm) || Boolean(next.bedrijf.btw)
+        );
         toast("Back-up teruggezet");
         navigate("/");
       } catch {
@@ -106,7 +130,7 @@ export function SettingsPage() {
   function doReset() {
     reset();
     setConfirmingReset(false);
-    toast("Demo-data hersteld");
+    toast("Administratie gewist — vul je bedrijfsgegevens opnieuw in");
     navigate("/");
   }
 
@@ -169,9 +193,9 @@ export function SettingsPage() {
                     className="select"
                     id="rechtsvorm"
                     value={form.rechtsvorm}
-                    onChange={(event) => setField("rechtsvorm", event.target.value)}
+                    onChange={(event) => kiesRechtsvorm(event.target.value)}
                   >
-                    {["Eenmanszaak", "VOF", "B.V.", "Stichting", "Anders"].map((vorm) => (
+                    {rechtsvormOpties(form.rechtsvorm).map((vorm) => (
                       <option key={vorm}>{vorm}</option>
                     ))}
                   </select>
@@ -186,13 +210,45 @@ export function SettingsPage() {
                   />
                 </div>
                 <div className="field">
-                  <label htmlFor="btw">Btw-nummer</label>
-                  <input
-                    className="input"
-                    id="btw"
-                    value={form.btw}
-                    onChange={(event) => setField("btw", event.target.value)}
-                  />
+                  {toonBtw ? (
+                    <>
+                      <label htmlFor="btw">Btw-nummer</label>
+                      <input
+                        className="input"
+                        id="btw"
+                        value={form.btw}
+                        onChange={(event) => setField("btw", event.target.value)}
+                      />
+                      {zonderBtwNummer(form.rechtsvorm) ? (
+                        <label className="check">
+                          <input
+                            type="checkbox"
+                            checked={btwPlichtig}
+                            onChange={(event) => {
+                              setBtwPlichtig(event.target.checked);
+                              if (!event.target.checked) setField("btw", "");
+                            }}
+                          />
+                          Toch btw-plichtig
+                        </label>
+                      ) : null}
+                    </>
+                  ) : (
+                    <>
+                      <label>Btw-nummer</label>
+                      <label className="check">
+                        <input
+                          type="checkbox"
+                          checked={false}
+                          onChange={() => setBtwPlichtig(true)}
+                        />
+                        Wel btw-plichtig
+                      </label>
+                      <span className="hint">
+                        Een vereniging of stichting is meestal niet btw-plichtig.
+                      </span>
+                    </>
+                  )}
                 </div>
                 <div className="field">
                   <label htmlFor="email">E-mailadres</label>
@@ -465,7 +521,7 @@ export function SettingsPage() {
               aria-label="Back-upbestand kiezen"
             />
             <button className="btn btn-danger" type="button" onClick={() => setConfirmingReset(true)}>
-              <Icon name="refresh" size={14} /> Demo-data herstellen
+              <Icon name="refresh" size={14} /> Administratie wissen
             </button>
           </div>
           {importError ? (
@@ -581,9 +637,9 @@ export function SettingsPage() {
 
       {confirmingReset ? (
         <ConfirmDialog
-          title="Demo-data herstellen?"
-          message="Al je eigen wijzigingen worden vervangen door de voorbeeldadministratie. Maak eerst een back-up als je je gegevens wilt bewaren."
-          confirmLabel="Herstellen"
+          title="Alles wissen?"
+          message="Je administratie wordt leeggemaakt en je begint opnieuw bij de wizard met je bedrijfsgegevens. Maak eerst een back-up als je iets wilt bewaren."
+          confirmLabel="Wissen"
           onConfirm={doReset}
           onCancel={() => setConfirmingReset(false)}
         />

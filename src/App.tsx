@@ -33,9 +33,18 @@ import { ExpensesPage } from "./pages/ExpensesPage";
 import { VatPage } from "./pages/VatPage";
 import { SettingsPage } from "./pages/SettingsPage";
 import { PlanAcceptPage } from "./pages/PlanAcceptPage";
+import { OnboardingPage } from "./pages/OnboardingPage";
 
 // De acceptatiepagina staat bewust buiten de app-shell: de klant hoeft geen administratie te zien.
 export function App() {
+  const { state } = useAppStore();
+  const location = useLocation();
+  // Zonder bedrijfsnaam kan Helder geen factuur of btw-overzicht maken: eerst de wizard.
+  // De acceptatiepagina voor een betaalregeling blijft bereikbaar, zodat een bestaande link werkt.
+  const wizardNodig = state.bedrijf.naam.trim() === "";
+  if (wizardNodig && !location.pathname.startsWith("/regeling/")) {
+    return <OnboardingPage />;
+  }
   return (
     <Routes>
       <Route path="/regeling/:token" element={<PlanAcceptPage />} />
@@ -330,7 +339,7 @@ function AppShell() {
         <CommandPalette open={paletteOpen} onOpenChange={setPaletteOpen} />
 
         <div className="page-foot">
-          <span>Helder</span> · demo-omgeving · gegevens staan lokaal in je browser · geen fiscaal advies
+          <span>Helder</span> · je gegevens staan lokaal op deze computer · geen fiscaal advies
         </div>
       </div>
     </div>

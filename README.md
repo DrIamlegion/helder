@@ -1,10 +1,11 @@
 # Helder — boekhouden zonder ruis
 
-Een werkende demo van een compacte boekhoudapp voor zzp en mkb, geïnspireerd op SnelStart:
-facturen, klanten, uitgaven en de btw-aangifte in één overzicht.
+Een compacte boekhoudapp voor zzp en mkb, geïnspireerd op SnelStart: facturen, klanten,
+uitgaven en de btw-aangifte in één overzicht.
 
 Gebouwd met **Vite**, **React** en **TypeScript**, zonder backend. De data staat in
-`localStorage` van je browser.
+`localStorage` van je browser. Bij de eerste start vult een **wizard** je bedrijfsgegevens in;
+daarna begin je met een lege administratie — er zitten geen voorbeeldklanten of -facturen in.
 
 ## Snel starten
 
@@ -55,8 +56,10 @@ Open daarna <http://localhost:5173/>.
 - **Btw-aangifte** — per kwartaal de rubrieken 1a, 1b, 1c, 5a, 5b en 5c, met deadline,
   indienstatus, onderbouwing en CSV-export.
 - **Instellingen** — bedrijfsgegevens, IBAN, betaaltermijn, automatisch klaarzetten van
-  aanmaningen aan/uit, JSON-back-up downloaden én terugzetten (met validatie en migratie van
-  oudere back-ups) en demo-data resetten.
+  aanmaningen aan/uit, JSON-back-up downloaden én terugzetten (met validatie) en de hele
+  administratie wissen. Kies je als rechtsvorm *stichting* of *vereniging*, dan blijft het
+  btw-nummer buiten beeld (die organisaties zijn meestal niet btw-plichtig); met één vinkje
+  haal je het veld terug als je wél btw-plichtig bent.
 
 Sneltoetsen: `N` nieuwe factuur, `O` nieuwe offerte, `R` herhalingen, `B` btw-aangifte,
 `U` uitgaven, `K` klanten, `P` producten, `A` rapporten, `H` aanmaningen. Met `Ctrl / ⌘ + K` open je vanaf
@@ -71,7 +74,7 @@ tsconfig.json           stricte TypeScript-configuratie
 src/main.tsx            React-root, router en providers
 src/App.tsx             app-shell, sidebar, sneltoetsen en routes
 src/types.ts            datamodel (bedrijf, klant, factuur, offerte, product, herhaling, btw)
-src/data.ts             demo-data, migratie, herhaalplanning, opslagsleutel en btw-berekening
+src/data.ts             lege start, staten, herhaalplanning, opslagsleutel en btw-berekening
 src/bank.ts             CSV-parser voor bankafschriften en factuurherkenning
 src/reminders.ts        niveaus, incassokosten en briefteksten voor herinneringen en aanmaningen
 src/paymentPlans.ts     betaalregelingen: termijnen, aflosschema, voortgang en achterstand
@@ -262,6 +265,8 @@ Wat er in deze repo al voor klaarstaat:
 Wat alleen jij kunt doen: de repository **openbaar** maken op GitHub, een SignPath-account
 aanvragen met dit project en beleid, de twee secrets (`SIGNPATH_API_TOKEN`,
 `SIGNPATH_ORGANIZATION_ID`) zetten, en per release de ondertekeningsaanvraag goedkeuren.
+Hoe je die eerste push doet — met de controlelijst vooraf, de repo-instellingen en de eerste
+tag — staat stap voor stap in [docs/publicatie.md](docs/publicatie.md).
 
 **Let op bij het testen:** `HELDER_SIGN_PUBLISHER` zet de uitgever in `app-update.yml`, en
 `electron-updater` weigert dan updates waarvan de handtekening niet van die uitgever is. Zet die
@@ -451,7 +456,7 @@ npm run license:check   # faalt als een bronbestand de header mist (handig in CI
 
 ## Bewust nog niet gebouwd
 
-Deze demo is een productprototype, geen productie-administratie:
+Dit is een productprototype, geen productie-administratie:
 
 - geen accounts, authenticatie of server-side opslag;
 - geen live bankkoppeling (PSD2) en geen eigen betaalintegratie: iDEAL loopt via een hosted

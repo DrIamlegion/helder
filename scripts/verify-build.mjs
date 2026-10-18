@@ -159,9 +159,10 @@ try {
       meld(false, `${bestand} ontbreekt in app.asar`);
       continue;
     }
-    gelijk += 1;
     gecontroleerd += 1;
-    if (sha256(inhoud) !== sha256(blobUitGit(bestand))) {
+    if (sha256(inhoud) === sha256(blobUitGit(bestand))) {
+      gelijk += 1;
+    } else {
       meld(false, `${bestand} wijkt af van HEAD (sha256 verschilt)`);
     }
   }

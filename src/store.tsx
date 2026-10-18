@@ -78,7 +78,7 @@ function loadState(): AppState {
       if (migrated) return migrated;
     }
   } catch {
-    // Fall back to the demo administration when storage is unavailable or corrupt.
+    // Geen bruikbare opslag: begin met een lege administratie (de wizard vult het bedrijf).
   }
   return seedState();
 }

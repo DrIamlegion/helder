@@ -69,9 +69,13 @@ export function InvoiceDocument({ invoice, company, customer }: InvoiceDocumentP
           <br />
           <br />
           <span className="muted">
-            KVK {company.kvk}
-            <br />
-            BTW {company.btw}
+            {company.kvk ? (
+              <>
+                KVK {company.kvk}
+                {company.btw ? <br /> : null}
+              </>
+            ) : null}
+            {company.btw ? <>BTW {company.btw}</> : null}
           </span>
         </div>
         <div>
