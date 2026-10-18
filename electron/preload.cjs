@@ -14,9 +14,19 @@ contextBridge.exposeInMainWorld("helder", {
   updateStatus: () => ipcRenderer.invoke("helder:update-status"),
   checkForUpdates: () => ipcRenderer.invoke("helder:update-check"),
   installUpdate: () => ipcRenderer.invoke("helder:update-install"),
+  leesFoutenlog: () => ipcRenderer.invoke("helder:fouten-lees"),
+  kopieerFoutenlog: () => ipcRenderer.invoke("helder:fouten-kopieer"),
+  neemTipsOver: () => ipcRenderer.invoke("helder:tips-overnemen"),
+  vensterStand: () => ipcRenderer.invoke("helder:venster-stand"),
+  vensterTerugzetten: () => ipcRenderer.invoke("helder:venster-terugzetten"),
   onUpdateStatus: (callback) => {
     const luisteraar = (_gebeurtenis, status) => callback(status);
     ipcRenderer.on("helder:update", luisteraar);
     return () => ipcRenderer.removeListener("helder:update", luisteraar);
+  },
+  onTip: (callback) => {
+    const luisteraar = (_gebeurtenis, melding) => callback(melding);
+    ipcRenderer.on("helder:tip", luisteraar);
+    return () => ipcRenderer.removeListener("helder:tip", luisteraar);
   },
 });

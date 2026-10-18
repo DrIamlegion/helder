@@ -1,9 +1,10 @@
-# Controleert elke pull request (en elke push naar main) op kwaliteit én op één ding extra:
-# hoort de gebouwde app bij de commit? Daarvoor bouwt deze workflow de app-map zoals de
-# release dat doet en laat hij scripts/verify-build.mjs elk bestand in app.asar hashen tegen
-# de commit onderscheidenlijk de verse build in dist/. Zo wordt een PR rood zodra de app en
-# de bron uit elkaar lopen — bijvoorbeeld doordat dist/ niet opnieuw gebouwd is, of doordat
-# er iets in electron/ meegebundeld wordt dat niet in de commit staat.
+# Controleert elke pull request (en elke push naar main) op kwaliteit én op twee dingen extra:
+# start de app nog zoals het hoort, en hoort de gebouwde app bij de commit? Voor het eerste
+# draait scripts/test-btw.mjs de btw-test in de echte app, voor het tweede bouwt deze
+# workflow de app-map zoals de release dat doet en laat hij scripts/verify-build.mjs elk bestand
+# in app.asar hashen tegen de commit onderscheidenlijk de verse build in dist/. Zo wordt een PR
+# rood zodra de app en de bron uit elkaar lopen — bijvoorbeeld doordat dist/ niet opnieuw
+# gebouwd is, of doordat er iets in electron/ meegebundeld wordt dat niet in de commit staat.
 #
 # De release-workflow doet dezelfde controle op een tag, met de tag- en installercontrole
 # erbij. Zie docs/code-signing-policy.md en README → Bijdragen.
@@ -36,6 +37,21 @@ jobs:
       # tsc --noEmit + vite build; hieruit komt de dist/ die hieronder gecontroleerd wordt.
       - name: Types en frontend bouwen
         run: npm run build
+
+      # De btw-test start de echte app en loopt vijf plekken door: de wizard, Instellingen, de
+      # factuur- en offerteweergave, de aanmaningsbrief en het btw-overzicht. Een vereniging of
+      # stichting heeft nergens een btw-nummer tenzij je het vinkje "Wel btw-plichtig" aanzet, en
+      # een eenmanszaak juist wel. Bewust vóór de app-map, zodat een gebroken btw-regel de
+      # pijplijn snel rood maakt in plaats van pas na de dure inpakstap. Een foutmelding in de app
+      # — in de pagina of in het hoofdproces — laat de test ook zakken. Ook de lege start zit
+      # erin: "Administratie wissen" terug naar de wizard, en annuleren dat niets wist. En het
+      # foutenlogboek: een echte fout hoort in fouten.log te belanden, in Instellingen te lezen
+      # zijn en met één knop op het klembord te staan.
+      # Zie electron/smoke-btw.cjs.
+      - name: Btw-test (stichting en vereniging)
+        run: node scripts/test-btw.mjs
+        env:
+          ELECTRON_ENABLE_LOGGING: "true"
 
       - name: App-map bouwen
         run: npx electron-builder --win --dir --x64

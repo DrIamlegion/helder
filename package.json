@@ -15,6 +15,8 @@
     "desktop": "npm run build && electron .",
     "installer": "npm run build && electron-builder --win nsis --x64",
     "typecheck": "tsc --noEmit",
+    "test": "npm run test:btw",
+    "test:btw": "npm run build && node scripts/test-btw.mjs",
     "sign:check": "node scripts/verify-signature.mjs",
     "latest-yml": "node scripts/latest-yml.mjs",
     "latest-yml:check": "node scripts/latest-yml.mjs --check",

@@ -15,7 +15,7 @@ import { normalizeState } from "../data";
 import { useTitle } from "../hooks";
 import { AUTO_DREMPELS, HERINNER_RUSTDAGEN } from "../reminders";
 import { useInstall, useOfflineGereed } from "../pwa";
-import { useUpdates } from "../desktop";
+import { useFoutenlog, useUpdates, useVensterstand } from "../desktop";
 import { download, fmtDate, todayISO } from "../lib";
 import { rechtsvormOpties, zonderBtwNummer } from "../rechtsvormen";
 import { useAppStore } from "../store";
@@ -39,6 +39,8 @@ export function SettingsPage() {
   const install = useInstall();
   const offlineGereed = useOfflineGereed();
   const updates = useUpdates();
+  const foutenlog = useFoutenlog();
+  const venster = useVensterstand();
 
   useTitle("Instellingen");
 
@@ -67,6 +69,7 @@ export function SettingsPage() {
     updates.status.toestand === "fout" && geenVerbinding
       ? { label: "Geen verbinding", className: "badge-gray" }
       : (updateBadge[updates.status.toestand] ?? updateBadge.onbekend);
+  const aantalFouten = foutenlog.log?.aantal ?? 0;
 
   function setField<K extends keyof Company>(key: K, value: Company[K]) {
     setForm((current) => ({ ...current, [key]: value }));
@@ -132,6 +135,24 @@ export function SettingsPage() {
     setConfirmingReset(false);
     toast("Administratie gewist — vul je bedrijfsgegevens opnieuw in");
     navigate("/");
+  }
+
+  async function kopieerLog() {
+    const gelukt = await foutenlog.kopieer();
+    toast(
+      gelukt
+        ? "Foutenlogboek gekopieerd — plak het in je foutmelding"
+        : "Kopiëren lukte niet. Open het bestand via Help → Logboek met fouten."
+    );
+  }
+
+  async function zetVensterTerug() {
+    const gelukt = await venster.terugzetten();
+    toast(
+      gelukt
+        ? "Venster teruggezet naar de standaardmaat"
+        : "Het venster kon niet worden teruggezet. Herstart Helder en probeer het opnieuw."
+    );
   }
 
   async function installeer() {
@@ -569,6 +590,90 @@ export function SettingsPage() {
             </Link>
           </div>
         </div>
+
+        {foutenlog.beschikbaar ? (
+          <div className="card card-pad">
+            <div className="row-between">
+              <h3 style={{ fontSize: 14.5, fontWeight: 640 }}>Foutenlogboek</h3>
+              <span
+                className={`badge ${aantalFouten > 0 ? "badge-amber" : "badge-gray"}`}
+              >
+                {foutenlog.mislukt && !foutenlog.log
+                  ? "Onbekend"
+                  : aantalFouten > 0
+                    ? `${aantalFouten} ${aantalFouten === 1 ? "fout" : "fouten"}`
+                    : "Geen fouten"}
+              </span>
+            </div>
+            <p className="small muted mt-8">
+              Struikelt Helder zelf, dan schrijft de app dat hieronder op: wanneer, in welke versie
+              en wat er misging. Je administratie staat er niet in. Meld je een fout, kopieer dan
+              alles in één keer en plak het in je bericht.
+            </p>
+            {foutenlog.log?.bestaat ? (
+              <pre
+                className="foutenlog mt-12"
+                tabIndex={0}
+                aria-label="Inhoud van het foutenlogboek"
+              >
+                {foutenlog.log.afgekapt
+                  ? "… alleen de nieuwste regels; kopiëren doet het hele bestand.\n\n"
+                  : ""}
+                {foutenlog.log.inhoud.trimEnd()}
+              </pre>
+            ) : foutenlog.mislukt ? (
+              <p className="small mt-12">
+                Het logboek kon niet worden gelezen. Open het via Help → Logboek met fouten.
+              </p>
+            ) : (
+              <p className="small mt-12">
+                Er is nog niets opgeschreven: in het programma ging tot nu toe niets mis.
+              </p>
+            )}
+            {foutenlog.log?.bestaat ? (
+              <div className="flex gap-8 mt-16" style={{ flexWrap: "wrap" }}>
+                <button className="btn" type="button" onClick={kopieerLog}>
+                  <Icon name="copy" size={14} /> Kopiëren voor een foutmelding
+                </button>
+              </div>
+            ) : null}
+            {foutenlog.log?.pad ? (
+              <p className="small muted mt-12">
+                Bestand: <span className="mono">{foutenlog.log.pad}</span>
+              </p>
+            ) : null}
+          </div>
+        ) : null}
+
+        {venster.beschikbaar ? (
+          <div className="card card-pad">
+            <div className="row-between">
+              <h3 style={{ fontSize: 14.5, fontWeight: 640 }}>Venster</h3>
+              <span
+                className={`badge ${venster.stand?.aangepast ? "badge-blue" : "badge-gray"}`}
+              >
+                {venster.stand?.aangepast ? "Eigen maat" : "Standaardmaat"}
+              </span>
+            </div>
+            <p className="small muted mt-8">
+              Helder opent de volgende keer op dezelfde plek en met dezelfde maat. De standaardmaat
+              past bij je scherm
+              {venster.stand
+                ? ` (${venster.stand.standaard.breedte} × ${venster.stand.standaard.hoogte})`
+                : ""}
+              .
+            </p>
+            <div className="row-between mt-12 small">
+              <span className="muted">Nu</span>
+              <strong>{venster.stand ? `${venster.stand.breedte} × ${venster.stand.hoogte}` : "—"}</strong>
+            </div>
+            <div className="flex gap-8 mt-16">
+              <button className="btn" type="button" onClick={zetVensterTerug} disabled={!venster.stand}>
+                <Icon name="refresh" size={14} /> Terug naar de standaardmaat
+              </button>
+            </div>
+          </div>
+        ) : null}
 
         <div className="card card-pad">
           <div className="row-between">

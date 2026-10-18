@@ -1,5 +1,9 @@
 # Bouwt Helder bij een tag (v0.1.7) en publiceert de installer met latest.yml.
 #
+# Voordat er iets ingepakt of ondertekend wordt, draait de btw-test (scripts/test-btw.mjs) in de
+# echte app: een tag publiceert alleen als wizard, Instellingen, de facturen, de brief en het
+# btw-overzicht nog doen wat ze moeten doen.
+#
 # Ondertekening loopt via SignPath Foundation, dat open-sourcesoftware gratis ondertekent.
 # Zolang de secrets er niet zijn, bouwt de workflow gewoon ongetekend door — handig om de
 # pijplijn te testen voordat de SignPath-projecten zijn aangevraagd.
@@ -47,6 +51,19 @@ jobs:
 
       - name: Bouwen (frontend + types)
         run: npm run build
+
+      # De btw-test start de echte app en loopt vijf plekken door: de wizard, Instellingen, de
+      # factuur- en offerteweergave, de aanmaningsbrief en het btw-overzicht. Een tag publiceert
+      # dus alleen als de app zelf nog goed werkt, en de test staat bewust vóór het inpakken en
+      # ondertekenen: een gebroken btw-regel mag geen dure SignPath-aanvraag kosten. Een
+      # foutmelding in de app — in de pagina of in het hoofdproces — laat de test ook zakken, net
+      # als een administratie die na "wissen" niet leeg blijkt, of een onverwachte fout die niet
+      # in het foutenlogboek in de gegevensmap terechtkomt, daar in Instellingen te lezen is of
+      # met één knop op het klembord belandt. Zie electron/smoke-btw.cjs.
+      - name: Btw-test (stichting en vereniging)
+        run: node scripts/test-btw.mjs
+        env:
+          ELECTRON_ENABLE_LOGGING: "true"
 
       # Stap 1: de app-map bouwen. Hierin zitten de bestanden die Windows vertrouwt.
       - name: App-map bouwen

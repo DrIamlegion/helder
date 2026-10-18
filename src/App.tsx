@@ -14,6 +14,7 @@ import { fmtDate, initials, invoiceState, quoteState, todayISO } from "./lib";
 import { useAppStore } from "./store";
 import { useToast } from "./components/Toast";
 import { useOnline } from "./pwa";
+import { useTips } from "./tips";
 import { BankPage } from "./pages/BankPage";
 import { DashboardPage } from "./pages/DashboardPage";
 import { InvoicesPage } from "./pages/InvoicesPage";
@@ -38,7 +39,11 @@ import { OnboardingPage } from "./pages/OnboardingPage";
 // De acceptatiepagina staat bewust buiten de app-shell: de klant hoeft geen administratie te zien.
 export function App() {
   const { state } = useAppStore();
+  const toast = useToast();
   const location = useLocation();
+  // Eenmalige tips horen bij de hele app, niet alleen bij de shell: ook tijdens de wizard en op
+  // de acceptatiepagina telt mee wat je al hebt gezien. De teksten staan in src/tips.ts.
+  useTips(toast);
   // Zonder bedrijfsnaam kan Helder geen factuur of btw-overzicht maken: eerst de wizard.
   // De acceptatiepagina voor een betaalregeling blijft bereikbaar, zodat een bestaande link werkt.
   const wizardNodig = state.bedrijf.naam.trim() === "";

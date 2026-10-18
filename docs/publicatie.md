@@ -1,7 +1,8 @@
 # Publiceren op GitHub
 
-Deze map is een git-repository op `main`, nog zonder remote. Hieronder staat wat er moet
-gebeuren om haar openbaar te maken, en welke controles je daarvoor draait.
+Deze map is een git-repository op `main`, gekoppeld aan de lege openbare repository
+`DrIamlegion/helder` via `origin`. Hieronder staat wat er moet gebeuren om haar te publiceren,
+en welke controles je daarvoor draait.
 
 ## Controlelijst vóór de eerste push
 
@@ -38,8 +39,16 @@ repository; `package-lock.json` is met ±340 kB het grootste bestand dat meegaat
 
 ## Eerste push
 
-1. **Repository aanmaken** op GitHub: openbaar, zonder README, licentie of `.gitignore` (die
-   staan er al in, en GitHub zou ze anders laten conflicteren). Met de GitHub CLI:
+1. **Repository** — `DrIamlegion/helder` bestaat al als lege openbare repository en `origin`
+   wijst ernaar. De eerste push is dus alleen nog:
+
+   ```bash
+   git push -u origin main
+   ```
+
+   Begin je opnieuw (bijvoorbeeld in een verse kloon), maak de repository dan aan: openbaar,
+   zonder README, licentie of `.gitignore` (die staan er al in, en GitHub zou ze anders laten
+   conflicteren). Met de GitHub CLI:
 
    ```bash
    gh repo create <gebruiker>/helder --public --source=. --remote=origin --push
@@ -85,10 +94,13 @@ repository; `package-lock.json` is met ±340 kB het grootste bestand dat meegaat
 
 ## Na de eerste push
 
-- De CI-workflow draait op elke pull request: licentiecontrole, typecheck en build, app-map
-  bouwen en de hashcontrole (`scripts/verify-build.mjs`).
-- De release-workflow draait op elke `v*`-tag: bouwen, app-bestanden ondertekenen, installer
-  bouwen en ondertekenen, `latest.yml` opnieuw genereren, hash- en handtekeningscontrole, en
-  pas dan publiceren.
+- De CI-workflow draait op elke pull request: licentiecontrole, typecheck en build, de
+  **btw-test** (`scripts/test-btw.mjs`, die de app echt start op de Windows-runner),
+  app-map bouwen en de hashcontrole (`scripts/verify-build.mjs`). Draai die btw-test ook lokaal
+  met `npm test` — in CI staat hij vóór de inpakstap, zodat een gebroken btw-regel meteen opvalt.
+- De release-workflow draait op elke `v*`-tag: bouwen, de **btw-test** in de echte app, de
+  app-map bouwen, app-bestanden ondertekenen, de installer bouwen en ondertekenen, `latest.yml`
+  opnieuw genereren, hash- en handtekeningscontrole, en pas dan publiceren. De test staat vóór
+  het inpakken, zodat een gebroken btw-regel geen dure ondertekeningsaanvraag kost.
 - Nieuwe versie: hoog `version` in `package.json` op, schrijf de sectie in `CHANGELOG.md`, commit,
   tag en push de tag.

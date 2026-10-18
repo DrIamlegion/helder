@@ -8,6 +8,15 @@ voordat je een update installeert.
 
 - Nieuwe knop Versiegeschiedenis in de update-kaart, met per versie wat er is veranderd.
 - De app toont overal zijn echte versienummer, in plaats van een vaste waarde.
+- Struikelt Helder zelf, dan schrijft de app dat op in `fouten.log` in je gegevensmap. In
+  Instellingen → Foutenlogboek lees je het terug en zet je het met één knop op je klembord, klaar
+  om bij een foutmelding te plakken.
+- Het venster opent op een maat die bij je scherm past, ook op een kleine of hoog geschaalde
+  monitor, en de zijbalk scrolt als hij niet in de hoogte past.
+- Helder onthoudt de maat en de plek van het venster tussen sessies. Instellingen → Venster toont
+  beide en heeft een knop om terug te gaan naar de standaardmaat; dat kan ook met het menu
+  Weergave → Venstermaat terugzetten of met Ctrl+Shift+0. Start de app gemaximaliseerd en
+  verklein je hem voor het eerst, dan wijst een korte melding je daarop — één keer.
 
 ## 0.1.6 — 18 oktober 2026
 

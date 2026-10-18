@@ -173,6 +173,40 @@ src/styles.css          design system en print-stijl
 - 5a = btw over 21% + 9%; 5b = voorbelasting; 5c = 5a − 5b.
 - Een negatief saldo betekent terug te ontvangen.
 - De deadline is de laatste dag van de maand ná het kwartaal (Q3 → 31 oktober).
+- Een **vereniging of stichting** is in principe niet btw-plichtig en heeft dan ook geen
+  btw-nummer. In de wizard en in Instellingen staat daarom een vinkje *Wel btw-plichtig* voor
+  organisaties die het wél zijn; zonder dat vinkje blijft het nummer leeg en verdwijnt de
+  BTW-regel van je eigen adres op facturen en offertes. Ook de **aanmaningsbrief** (afzenderblok
+  met IBAN, e-mail en telefoon, zonder btw-nummer) en het **btw-overzicht** (rubriekcijfers,
+  nergens je eigen nummer) blijven vrij van die regel. `npm test` loopt dat in de echte app door,
+  op alle vijf de plekken: de wizard, Instellingen, de factuur- en offerteweergave, de brief en
+  het overzicht. Bij de wizard, Instellingen en de documenten zit een tegenproef in de test zelf
+  — een eenmanszaak moet het veld juist meteen tonen, en mét een eigen nummer moet die BTW-regel
+  wél op het document staan. De brief en het overzicht zijn een wachter: daar falen de controles
+  zodra er een BTW-regel met een nummer opduikt. De test telt ook de **fouten van de app zelf**
+  mee — een React-fout of mislukte laadactie in de pagina, en in het hoofdproces een uitzondering,
+  een afgewezen belofte of een `console.error` — zodat een stille fout niet ongemerkt langs de
+  controles glipt. Tot slot de **lege start**: "Administratie wissen" brengt je terug naar de
+  wizard met een lege administratie (geen btw-nummer, geen facturen, geen klanten), en annuleren
+  wist juist niets. De test veroorzaakt ook een echte fout in het hoofdproces en controleert dat
+  die in `fouten.log` in de gegevensmap belandt, dat een tweede fout erbij komt in plaats van het
+  bestand te overschrijven, dat een vol logboek als `fouten.log.oud` bewaard blijft, en dat het
+  venster daarna gewoon doordraait. Daarna leest hij het logboek zoals een gebruiker dat doet:
+  de kaart **Instellingen → Foutenlogboek** toont de fouten, telt ze en noemt het pad, de knop
+  *Kopiëren voor een foutmelding* zet het hele logboek plus versie en systeem op het klembord,
+  een groot logboek wordt op het scherm ingekort, en zonder logboek zegt de kaart eerlijk dat er
+  niets is opgeschreven (zie *Als er iets misgaat*). Tot slot het **venster**: het past op het
+  scherm waarop het opent, de maat gaat mee met kleine werkvlakken (nagekeken voor schermen van
+  800 × 480 tot 3840 × 2080) en in een kort venster scrolt de zijbalk naar de laatste ingang. De
+  kaart **Instellingen → Venster** toont de huidige en de standaardmaat, en de knop zet het
+  venster terug, en het menu-item *Venstermaat terugzetten* met zijn sneltoets doet hetzelfde
+  vanaf 1100 × 700. Daarna start de test de app nog vijf keer in dezelfde gegevensmap: eerst
+  gemaximaliseerd (met de normale maat bewaard), dan verkleind — waarbij de tip met de sneltoets
+  één keer hoort te komen en als gezien bewaard wordt — dan weer gemaximaliseerd en nog eens
+  verkleind (de tip mag nu niet terugkomen), en tot slot ongemaximaliseerd op precies de bewaarde
+  plek en maat. Een laatste start in een eigen profiel met een oude `venster-tip.json` controleert
+  dat de markering van vóór het tipsysteem wordt overgenomen — de tip blijft dan weg — en dat het
+  oude bestand wordt opgeruimd. Anders telt de test niet als geslaagd.
 
 ## Windows-installer
 
@@ -188,9 +222,22 @@ Wil je Helder als gewoon Windows-programma met een installer, dan bouw je die ze
   pc beschermd"; kies *Meer informatie* → *Toch uitvoeren*. Zie *Ondertekening (code signing)*.
 - De app start direct op, zonder server en zonder internet. Je administratie staat in
   `%APPDATA%\Helder` en blijft ook na verwijderen bewaard (`deleteAppDataOnUninstall: false`).
+- Het venster opent op een maat die bij je scherm past: hoogstens 1360 × 900, en kleiner als je
+  werkvlak kleiner is. Op een laptop van 1366 × 768 of een hoog geschaalde monitor valt er zo
+  niets achter de taakbalk of buiten beeld. Past de zijbalk niet in de hoogte, dan scrolt hij in
+  plaats van onder de rand te verdwijnen (`electron/venster.cjs`).
+- Helder onthoudt de maat en de plek van het venster in `venster.json` in de gegevensmap, zodat de
+  volgende start hetzelfde is. Hoort die stand bij een monitor die niet meer is aangesloten, of
+  past hij niet meer, dan begint de app weer op de standaardmaat in het midden van het scherm.
+  Terug naar die standaardmaat gaat met de knop in **Instellingen → Venster**, met het menu
+  **Weergave → Venstermaat terugzetten** of met de sneltoets **Ctrl+Shift+0**. Opent de app
+  gemaximaliseerd en verklein je hem voor het eerst, dan wijst een korte melding je op die
+  sneltoets; daarna komt hij niet meer terug. Alle eenmalige tips staan bij elkaar in
+  [src/tips.ts](src/tips.ts): een nieuwe tip is daar één regel, plus de plek die hem aanroept.
 - Het programma zelf is [electron/main.cjs](electron/main.cjs): het serveert de gebouwde bestanden
   via een eigen `app://`-adres, opent externe links (betaalpagina's, e-mail) in je browser en heeft
-  een menu met *Map met gegevens openen*, zoomen en *Ontwikkelaarstools*.
+  een menu met *Map met gegevens openen*, *Logboek met fouten*, zoomen, *Venstermaat terugzetten*
+  (Ctrl+Shift+0) en *Ontwikkelaarstools*.
 - Zonder installer draaien kan ook: `npm run desktop`.
 - Kom je uit de browser- of PWA-versie? Download daar een back-up (Instellingen → *Back-up
   downloaden*) en zet die in de desktop-app terug via *Back-up terugzetten*; het zijn twee aparte
@@ -198,6 +245,25 @@ Wil je Helder als gewoon Windows-programma met een installer, dan bouw je die ze
 - Voor de bouw staat `electronDist` op `node_modules/electron/dist`, zodat electron-builder de
   Electron-distributie niet opnieuw hoeft uit te pakken (dat liep in deze omgeving stuk op een
   rename-fout van Windows).
+
+## Als er iets misgaat
+
+- Een onverwachte fout in het programma zelf laat het foutvenster van Electron staan en komt
+  tegelijk in **`fouten.log`** in je gegevensmap (`%APPDATA%\Helder`). Daar staat het tijdstip,
+  de versie van Helder en van Electron, je platform en de fout met zijn stapel. Je administratie
+  staat er niet in — alleen dat spoor, zodat je kunt melden wat er misging.
+- Open het via het menu **Help → Logboek met fouten**, of lees het in **Instellingen →
+  Foutenlogboek**. Daar staan de nieuwste fouten in een venster op het scherm; een heel groot
+  logboek wordt daarbij ingekort met een uitleg erboven, want een megabyte tekst laat de pagina
+  haperen. Met **Kopiëren voor een foutmelding** staat het hele logboek in één keer op je
+  klembord, met daarboven de versie van Helder, je systeem en het pad — klaar om in een bericht
+  te plakken. Bestaat het bestand nog niet, dan zegt Helder dat er niets is opgeschreven.
+- Het bestand groeit mee tot 1 MB; daarna begint het opnieuw en blijft de vorige inhoud staan als
+  `fouten.log.oud`. Weggooien mag altijd. De code staat in
+  [electron/foutenlog.cjs](electron/foutenlog.cjs) en de kaart in
+  [SettingsPage.tsx](src/pages/SettingsPage.tsx); `npm test` veroorzaakt een echte fout in het
+  hoofdproces, kijkt na dat hij in het logboek belandt en leest het daarna terug via de kaart en
+  de kopieerknop.
 
 ## Ondertekening (code signing)
 
@@ -443,12 +509,19 @@ npm run license:check   # faalt als een bronbestand de header mist (handig in CI
 
 - Bijdragen vallen onder dezelfde AGPL-3.0-licentie; door een pull request in te dienen ga je
   daarmee akkoord.
-- Draai vóór een pull request `npm run typecheck`, `npm run build` en `npm run license:check`.
+- Draai vóór een pull request `npm run typecheck`, `npm test` en `npm run license:check`.
+  `npm test` bouwt eerst en loopt daarna de btw-test in de echte app door; dat duurt ongeveer
+  tien seconden. De test krijgt een eigen tijdelijke profielmap mee, dus je administratie
+  blijft buiten schot en de app mag gewoon openstaan.
 - Elke pull request draait [CI](.github/workflows/ci.yml): licentiecontrole, typecheck en build,
-  de app-map bouwen en de hashcontrole. Een PR waarin de app en `dist/` uit elkaar lopen wordt
-  daar dus rood — bouw dus altijd opnieuw voordat je pusht.
+  de **btw-test** (`node scripts/test-btw.mjs`, op een Windows-runner), het bouwen van
+  de app-map en de hashcontrole. Een PR waarin de btw-regel voor stichting of vereniging breekt
+  wordt daardoor rood, net als een PR waarin de app en `dist/` uit elkaar lopen — bouw dus altijd
+  opnieuw voordat je pusht. De btw-test staat vóór de inpakstap, zodat je die fout meteen ziet.
 - Nieuwe versies: hoog de versie op, schrijf de sectie in [CHANGELOG.md](CHANGELOG.md) en tag
-  `v<versie>`; de release-workflow doet de rest (zie *Ondertekening*).
+  `v<versie>`; de release-workflow draait eerst de btw-test, bouwt en ondertekent daarna, en
+  publiceert pas als alles groen is (zie *Ondertekening*). Een tag met een gebroken btw-regel
+  komt er dus niet doorheen.
 - Controleer na een build dat het pakket echt bij de commit hoort:
   `npm run verify:build -- --tag v<versie>` (of `--app-map` om een bestaande installatie te
   controleren). Zonder `--tag` slaat hij de tag- en installercontrole over.
