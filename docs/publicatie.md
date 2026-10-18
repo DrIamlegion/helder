@@ -17,6 +17,9 @@ npm run verify:build             # app.asar hoort bij HEAD (na een build)
 git ls-files -z | xargs -0 du -cb | tail -1    # totale omvang van wat er meegaat
 ```
 
+De controles van de CI-workflow draai je in één keer met `npm run ci`: licentieheaders, build,
+de btw-test in de echte app, de app-map en de hashcontrole.
+
 Geen geheimen of grote bestanden in de repository:
 
 ```bash

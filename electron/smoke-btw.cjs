@@ -48,11 +48,12 @@
 // verwachtingen hieronder staan bewust los van src/rechtsvormen.ts: een test hoort de regel te
 // controleren, niet over te schrijven.
 
-const { app, clipboard, Menu, screen } = require("electron");
+const { app, clipboard, dialog, Menu, screen } = require("electron");
 const { appendFileSync, existsSync, readFileSync, rmSync, statSync } = require("node:fs");
 const { writeFile } = require("node:fs/promises");
 const path = require("node:path");
 const { logPad } = require("./foutenlog.cjs");
+const { schrijfBriefPdf } = require("./brief-pdf.cjs");
 const { vensterMaat, standaardStand, pasAanOpScherm } = require("./venster.cjs");
 
 const BTW_NUMMER = "NL123456789B01";
@@ -74,6 +75,23 @@ const HULP = `
   };
   const check = (naam, ok, detail) =>
     uitslagen.push({ naam: naam, ok: !!ok, detail: detail === undefined ? "" : String(detail) });
+  // Zet de printregels even op het scherm om de printopmaak te kunnen meten.
+  const printMedia = (aan) => {
+    let aantal = 0;
+    for (const sheet of document.styleSheets) {
+      try {
+        for (const regel of sheet.cssRules) {
+          if (regel.media && regel.conditionText === "print") {
+            regel.media.mediaText = aan ? "all" : "print";
+            aantal++;
+          }
+        }
+      } catch {
+        // Een stylesheet dat niet leesbaar is, telt niet mee.
+      }
+    }
+    return aantal;
+  };
   const veld = (id) => document.querySelector("#" + id);
   const waarde = (id) => {
     const element = veld(id);
@@ -340,7 +358,375 @@ ${HULP}
   check("ons btw-nummer staat nergens in de brief", !tekst.includes(eigenBtw));
   check("geen BTW-regel met een nummer in de brief", btwRegelMetNummer() === "", btwRegelMetNummer());
 
+  // Op papier hoort de brief ook zelf marge te houden, niet alleen via @page, en de gewone
+  // aanmaning gebruikt dezelfde compacte leesmaat als de laatste brief.
+  const papier = document.querySelector(".paper");
+  check("de gewone aanmaning gebruikt de compacte briefopmaak", !!document.querySelector(".paper-brief"));
+  printMedia(true);
+  const papierPadding = papier ? parseFloat(getComputedStyle(papier).paddingTop) : 0;
+  const briefFont = papier && papier.querySelector(".letter-body")
+    ? getComputedStyle(papier.querySelector(".letter-body")).fontSize
+    : "geen brief";
+  printMedia(false);
+  check("de printstijl houdt marge op de brief", papierPadding > 0, papierPadding + " px padding");
+  check("de gewone aanmaning heeft dezelfde compacte leesmaat", briefFont === "11.6px", briefFont);
+  check("alleen de laatste aanmaning heeft een knop PDF opslaan", !knop("PDF opslaan"));
+  check("de gewone aanmaning heeft ook een A4-voorbeeld", !!knop("A4-voorbeeld"));
+
   return { geval: "Aanmaningsbrief", uitslagen: uitslagen };
+})()`;
+}
+
+function laatsteBriefBron() {
+  return `(async () => {
+${HULP}
+  await gaNaar("#/herinneringen/inv-test", () => !!document.querySelector(".letter-body"));
+  const laatsteKnop = [...document.querySelectorAll(".seg button")].find(
+    (knop) => (knop.textContent || "").trim() === "Laatste aanmaning"
+  );
+  if (laatsteKnop) laatsteKnop.click();
+  await wachtTot(() => !!document.querySelector(".paper-laatste .letter-plan-qr img"));
+  const papier = document.querySelector(".paper");
+  check(
+    "de laatste aanmaning heeft de compacte printopmaak",
+    !!document.querySelector(".paper-brief.paper-laatste"),
+    (papier ? papier.className : "geen papier") + " @ " + location.hash
+  );
+  check(
+    "het betaalschema en de QR staan naast elkaar",
+    !!document.querySelector(".letter-plan-body .letter-plan-schema") &&
+      !!document.querySelector(".letter-plan-body .letter-plan-qr"),
+    document.querySelector(".letter-plan-body") ? "plan-body gevonden" : "geen plan-body"
+  );
+  check(
+    "de handtekening en de totalen staan naast elkaar",
+    !!document.querySelector(".letter-end .letter-signature") &&
+      !!document.querySelector(".letter-end .letter-summary"),
+    document.querySelector(".letter-end") ? "letter-end gevonden" : "geen letter-end"
+  );
+  const pdfKnop = knop("PDF opslaan");
+  check("de laatste aanmaning heeft een knop PDF opslaan", !!pdfKnop && !pdfKnop.disabled);
+  check(
+    "de PDF-knop praat met het hoofdproces",
+    typeof window.helder?.opslaanBriefPdf === "function"
+  );
+  // De knoprij groeit met elke actie; hij moet binnen het venster blijven in plaats van
+  // onder de rand te verdwijnen. Bij een smal venster wikkelen de knoppen naar een tweede regel.
+  const acties = document.querySelector(".page-head .actions");
+  const kader = acties ? acties.getBoundingClientRect() : null;
+  check(
+    "de acties van de brief passen binnen het venster",
+    !!acties &&
+      !!kader &&
+      kader.right <= document.documentElement.clientWidth + 1 &&
+      acties.scrollWidth <= acties.clientWidth + 1,
+    acties && kader
+      ? Math.round(kader.right) +
+        " / " +
+        document.documentElement.clientWidth +
+        " · " +
+        acties.scrollWidth +
+        "/" +
+        acties.clientWidth
+      : "geen acties"
+  );
+
+  // Het A4-voorbeeld zet de printopmaak op het scherm. Zo zie je vóór het printen dezelfde
+  // marges, leesmaat en paginamaat als op papier.
+  const voorbeeldKnop = knop("A4-voorbeeld");
+  check("de briefpagina heeft een knop A4-voorbeeld", !!voorbeeldKnop);
+  klik(voorbeeldKnop);
+  await wachtTot(
+    () =>
+      !!document.querySelector(".brief-preview-bar") &&
+      document.body.classList.contains("brief-preview-open")
+  );
+  const vel = document.querySelector(".paper");
+  await wachtTot(() => (vel ? vel.getBoundingClientRect().width : 0) > 700);
+  const velKader = vel ? vel.getBoundingClientRect() : null;
+  const leesmaat = document.querySelector(".letter-body")
+    ? getComputedStyle(document.querySelector(".letter-body")).fontSize
+    : "geen brief";
+  const kop = document.querySelector(".page-head");
+  const kopVerborgen = kop ? getComputedStyle(kop).display === "none" : false;
+  check(
+    "het A4-voorbeeld gebruikt de printopmaak",
+    kopVerborgen && leesmaat === "11.6px",
+    "kop " + (kopVerborgen ? "verborgen" : "zichtbaar") + " · leesmaat " + leesmaat
+  );
+  check(
+    "het A4-voorbeeld toont een vel van 210 × 297 mm",
+    !!velKader &&
+      Math.abs(velKader.width - 793.7) < 2.5 &&
+      Math.abs(velKader.height - 1122.5) < 12,
+    velKader ? Math.round(velKader.width) + "×" + Math.round(velKader.height) + " px" : "geen vel"
+  );
+  // De balk hoort alleen op het scherm. De verbergregel zit in een aparte stylesheet met
+  // media="print"; zetten we die tijdelijk op "all", dan moet de balk echt verdwijnen.
+  const verbergBlad = [...document.styleSheets].find((blad) => {
+    const node = blad.ownerNode;
+    return (
+      node instanceof HTMLStyleElement &&
+      node.getAttribute("media") === "print" &&
+      [...blad.cssRules].some((regel) => (regel.cssText || "").includes(".brief-preview-bar"))
+    );
+  });
+  const balk = document.querySelector(".brief-preview-bar");
+  let balkWegOpPapier = false;
+  if (verbergBlad && balk) {
+    verbergBlad.media.mediaText = "all";
+    balkWegOpPapier = getComputedStyle(balk).display === "none";
+    verbergBlad.media.mediaText = "print";
+  }
+  check("de voorbeeldbalk verdwijnt op papier", balkWegOpPapier);
+  klik(knop("Sluiten"));
+  await wachtTot(() => {
+    const kop = document.querySelector(".page-head");
+    return (
+      !document.querySelector(".brief-preview-bar") &&
+      !!kop &&
+      getComputedStyle(kop).display !== "none"
+    );
+  });
+  check(
+    "na sluiten staat de gewone briefpagina er weer",
+    !document.body.classList.contains("brief-preview-open"),
+    document.body.classList.contains("brief-preview-open") ? "voorbeeld nog open" : "voorbeeld gesloten"
+  );
+
+  return { geval: "Laatste aanmaning", uitslagen: uitslagen };
+})()`;
+}
+
+function logoBron() {
+  return `(async () => {
+${HULP}
+  await gaNaar("#/instellingen", () => !!document.querySelector("#logo"));
+  check("Instellingen heeft een logo-veld", !!document.querySelector(".logo-field"));
+
+  const invoer = document.querySelector("#logo");
+  const keuze = (bestand) => {
+    const dt = new DataTransfer();
+    dt.items.add(bestand);
+    invoer.files = dt.files;
+    invoer.dispatchEvent(new Event("change", { bubbles: true }));
+  };
+  const meldingen = () => (document.querySelector("#toast-root") || {}).innerText || "";
+
+  keuze(new File(["geen afbeelding"], "logo.txt", { type: "text/plain" }));
+  await wacht(300);
+  check("een ander bestandstype wordt geweigerd", meldingen().includes("PNG-, JPG- of WebP"), meldingen());
+  check("een geweigerd bestand krijgt geen voorbeeld", !document.querySelector(".logo-preview img"));
+
+  keuze(new File([new Uint8Array(600 * 1024)], "groot.png", { type: "image/png" }));
+  await wacht(300);
+  check("een te groot logo wordt geweigerd", meldingen().includes("maximaal 500 kB"), meldingen());
+  check("een te groot bestand krijgt geen voorbeeld", !document.querySelector(".logo-preview img"));
+
+  const canvas = document.createElement("canvas");
+  canvas.width = 160;
+  canvas.height = 48;
+  const teken = canvas.getContext("2d");
+  teken.fillStyle = "#0e8f68";
+  teken.fillRect(0, 0, 160, 48);
+  teken.fillStyle = "#ffffff";
+  teken.font = "bold 26px sans-serif";
+  teken.textBaseline = "middle";
+  teken.fillText("SL", 57, 25);
+  const blob = await new Promise((klaar) => canvas.toBlob(klaar, "image/png"));
+  keuze(new File([blob], "logo.png", { type: "image/png" }));
+
+  const geladen = await wachtTot(() => {
+    const img = document.querySelector(".logo-preview img");
+    return !!img && img.complete && img.naturalWidth > 0;
+  }, 8000);
+  const voorbeeld = document.querySelector(".logo-preview img");
+  check(
+    "het gekozen logo verschijnt in het voorbeeld",
+    geladen && !!voorbeeld,
+    voorbeeld ? voorbeeld.src.slice(0, 32) : "geen voorbeeld"
+  );
+  check(
+    "de voorbeeldafbeelding is echt geladen",
+    !!voorbeeld && voorbeeld.naturalWidth === 160 && voorbeeld.naturalHeight === 48,
+    voorbeeld ? voorbeeld.naturalWidth + "×" + voorbeeld.naturalHeight : "geen afbeelding"
+  );
+
+  klik(knop("Opslaan"));
+  const bewaard = await wachtTot(
+    () => /^data:image\\/png;base64,/.test((bedrijfUitOpslag().logo || "")),
+    5000
+  );
+  check("het logo staat in de opslag", bewaard, (bedrijfUitOpslag().logo || "").slice(0, 32));
+
+  const klein = bedrijfUitOpslag().logoKlein || "";
+  check(
+    "de compacte logovariant staat in de opslag",
+    /^data:image\\/(webp|png);base64,/.test(klein),
+    klein.slice(0, 32)
+  );
+  check("de compacte logovariant blijft onder de linkgrens", klein.length > 0 && klein.length <= 1400, klein.length);
+  const kleinBeeld = await new Promise((klaar) => {
+    const img = new Image();
+    img.onload = () => klaar(img);
+    img.onerror = () => klaar(null);
+    img.src = klein;
+  });
+  check(
+    "de compacte variant past in de kop van de publieke pagina",
+    !!kleinBeeld &&
+      kleinBeeld.naturalWidth > 0 &&
+      kleinBeeld.naturalWidth <= 132 &&
+      kleinBeeld.naturalHeight <= 72,
+    kleinBeeld ? kleinBeeld.naturalWidth + "×" + kleinBeeld.naturalHeight : "geen afbeelding"
+  );
+
+  // De openbare betaalpagina haalt alles uit de link; het logo moet daarin meekomen zonder
+  // dat de link onbruikbaar lang wordt. Niveau 3 toont de deellink al vóór het versturen.
+  await gaNaar("#/herinneringen/inv-test?niveau=3", () => !!document.querySelector(".share-row input"));
+  const deellink = document.querySelector(".share-row input")
+    ? document.querySelector(".share-row input").value
+    : "";
+  check("de deellink is gemaakt", deellink.includes("#/regeling/"), deellink.slice(0, 60));
+  check("de deellink blijft compact", deellink.length <= 2600, deellink.length);
+  const hash = deellink.indexOf("#");
+  await gaNaar(hash >= 0 ? deellink.slice(hash) : "", () => !!document.querySelector(".public-page"));
+  const publiekLogo = await wachtTot(() => {
+    const img = document.querySelector(".public-top .public-logo");
+    return !!img && img.complete && img.naturalWidth > 0;
+  }, 5000);
+  check(
+    "het logo staat op de publieke betaalpagina",
+    publiekLogo && !!document.querySelector(".public-top .public-logo"),
+    (document.querySelector(".public-top") || {}).innerText || "geen kop"
+  );
+  check(
+    "de publieke pagina gebruikt geen initialen meer",
+    !document.querySelector(".public-top .mark")
+  );
+
+  // De klant geeft akkoord; daarna print hij de bevestiging. De printstijl hoort de logo-kop
+  // te laten staan, terwijl de knoppen verdwijnen.
+  const akkoordVak = document.querySelector(".accept-check input");
+  if (akkoordVak) akkoordVak.click();
+  await wacht(50);
+  const akkoordKnop = knop("Akkoord geven");
+  if (akkoordKnop) akkoordKnop.click();
+  const bevestiging = await wachtTot(() => !!document.querySelector(".accept-done"));
+  check("de bevestiging verschijnt na het akkoord", bevestiging);
+
+  // Zet de printregels heel even op het scherm om te controleren dat ze de kop niet verbergen
+  // en dat de pagina zelf marge houdt.
+  const printAantal = printMedia(true);
+  const kopInPrint = document.querySelector(".public-top")
+    ? getComputedStyle(document.querySelector(".public-top")).display
+    : "geen kop";
+  const logoInPrint = document.querySelector(".public-top .public-logo");
+  const logoZichtbaar = !!logoInPrint && logoInPrint.getBoundingClientRect().width > 0;
+  const publiekePadding = document.querySelector(".public-page")
+    ? parseFloat(getComputedStyle(document.querySelector(".public-page")).paddingTop)
+    : 0;
+  const kopieerKnop = document.querySelector(".code-box .btn");
+  const kopieerPrint = kopieerKnop ? getComputedStyle(kopieerKnop).display : "geen knop";
+  printMedia(false);
+  check(
+    "de printstijl houdt de logo-kop zichtbaar",
+    printAantal > 0 && kopInPrint !== "none" && logoZichtbaar,
+    printAantal + " printblokken, display " + kopInPrint
+  );
+  check(
+    "de printstijl houdt marge op de publieke pagina",
+    publiekePadding > 0,
+    publiekePadding + " px padding"
+  );
+  check("de kopieerknop valt weg op papier", !!kopieerKnop && kopieerPrint === "none", kopieerPrint);
+
+  await gaNaar("#/facturen/inv-test", () => documentnummer().includes("2026-0042"));
+  await wachtTot(() => {
+    const img = document.querySelector(".paper-brand .paper-logo");
+    return !!img && img.complete && img.naturalWidth > 0;
+  });
+  check(
+    "het logo staat op de factuur",
+    !!document.querySelector(".paper-brand .paper-logo"),
+    document.querySelector(".paper-brand") ? document.querySelector(".paper-brand").innerText : "geen kop"
+  );
+  check("de initialen zijn op de factuur vervangen", !document.querySelector(".paper-brand .mark"));
+
+  await gaNaar("#/offertes/off-test", () => documentnummer().includes("OFF-2026-0099"));
+  await wachtTot(() => {
+    const img = document.querySelector(".paper-brand .paper-logo");
+    return !!img && img.complete && img.naturalWidth > 0;
+  });
+  check("het logo staat op de offerte", !!document.querySelector(".paper-brand .paper-logo"));
+
+  await gaNaar("#/herinneringen/inv-test?niveau=1", () => !!document.querySelector(".letter-body"));
+  await wachtTot(() => {
+    const img = document.querySelector(".paper-brand .paper-logo");
+    return !!img && img.complete && img.naturalWidth > 0;
+  });
+  check("het logo staat op de aanmaningsbrief", !!document.querySelector(".paper-brand .paper-logo"));
+
+  // De laatste aanmaning bevat de betaalregeling. De lange deellink hoort daar niet meer
+  // voluit op te staan: de klant scant de QR-code. Via de niveauknop, zoals een gebruiker
+  // doet; een losse hashwijziging binnen dezelfde brief houdt het gekozen niveau namelijk.
+  const laatsteKnop = [...document.querySelectorAll(".seg button")].find(
+    (knop) => (knop.textContent || "").trim() === "Laatste aanmaning"
+  );
+  check("de knop Laatste aanmaning staat op de brief", !!laatsteKnop);
+  if (laatsteKnop) laatsteKnop.click();
+  const qrGeladen = await wachtTot(() => {
+    const img = document.querySelector(".letter-plan-qr img");
+    return !!img && img.complete && img.naturalWidth > 0;
+  }, 8000);
+  const qr = document.querySelector(".letter-plan-qr img");
+  check(
+    "de laatste aanmaning toont een QR-code",
+    qrGeladen && !!qr && /^data:image\\/png;base64,/.test(qr.src),
+    qr ? qr.src.slice(0, 30) : "geen QR-code"
+  );
+  check(
+    "de QR-code is groot genoeg voor print",
+    !!qr && qr.naturalWidth >= 600,
+    qr ? qr.naturalWidth + "×" + qr.naturalHeight : "geen QR-code"
+  );
+  check(
+    "de lange deellink staat niet meer op de brief",
+    !(document.querySelector(".letter-plan")?.innerText || "").includes("#/regeling/")
+  );
+
+  await gaNaar("#/instellingen", () => !!document.querySelector("#logo"));
+  await wachtTot(() => !!document.querySelector(".logo-preview img"));
+  klik(knop("Verwijderen"));
+  await wachtTot(() => !document.querySelector(".logo-preview img"));
+  klik(knop("Opslaan"));
+  const verwijderd = await wachtTot(
+    () => bedrijfUitOpslag().logo === "" && bedrijfUitOpslag().logoKlein === "",
+    5000
+  );
+  check(
+    "het logo kan weer weg, samen met de compacte variant",
+    verwijderd,
+    JSON.stringify(bedrijfUitOpslag().logo) + " / " + JSON.stringify(bedrijfUitOpslag().logoKlein)
+  );
+
+  // Een nieuwe deellink zonder logo hoort gewoon te werken en valt terug op de initialen.
+  await gaNaar("#/herinneringen/inv-test?niveau=3", () => !!document.querySelector(".share-row input"));
+  const zonderLink = document.querySelector(".share-row input")
+    ? document.querySelector(".share-row input").value
+    : "";
+  const zonderHash = zonderLink.indexOf("#");
+  await gaNaar(zonderHash >= 0 ? zonderLink.slice(zonderHash) : "", () => !!document.querySelector(".public-page"));
+  await wachtTot(() => !!document.querySelector(".public-top .mark"));
+  check("zonder logo gebruikt de publieke pagina weer de initialen", !!document.querySelector(".public-top .mark"));
+  check("zonder logo staat er geen afbeelding in de publieke kop", !document.querySelector(".public-top .public-logo"));
+
+  await gaNaar("#/facturen/inv-test", () => documentnummer().includes("2026-0042"));
+  await wachtTot(() => !!document.querySelector(".paper-brand .mark"));
+  check("zonder logo staan de initialen terug", !!document.querySelector(".paper-brand .mark"));
+  check("zonder logo is er geen afbeelding meer", !document.querySelector(".paper-brand .paper-logo"));
+
+  return { geval: "Logo", uitslagen: uitslagen };
 })()`;
 }
 
@@ -592,9 +978,22 @@ const GEVALLEN = [
     testgeval: {},
   },
   {
+    naam: "Laatste aanmaning",
+    start: staat("Stichting", BTW_NUMMER, true),
+    bron: laatsteBriefBron,
+    testgeval: {},
+    print: true,
+  },
+  {
     naam: "Btw-overzicht",
     start: staat("Stichting", BTW_NUMMER, true),
     bron: overzichtBron,
+    testgeval: {},
+  },
+  {
+    naam: "Logo",
+    start: staat("Eenmanszaak", BTW_NUMMER, true),
+    bron: logoBron,
     testgeval: {},
   },
   {
@@ -1293,6 +1692,94 @@ async function btwTest(venster, consoleFouten = [], hoofdprocesFouten = []) {
     for (const geval of GEVALLEN) {
       await herlaadMet(venster, geval.start);
       const uitslag = await venster.webContents.executeJavaScript(geval.bron(geval.testgeval));
+      if (geval.print) {
+        // De laatste aanmaning hoort op één A4 te passen. Dit gebruikt dezelfde weg als de
+        // knop in de app: printen met de vaste A4-opties en het resultaat als bestand schrijven.
+        const doel = path.join(app.getPath("temp"), `helder-brief-${Date.now()}`);
+        let geschreven = "";
+        try {
+          geschreven = await schrijfBriefPdf(venster, doel);
+          const pdf = readFileSync(geschreven);
+          const paginas = (pdf.toString("latin1").match(/\/Type\s*\/Page[^s]/g) || []).length;
+          // De knop moet dezelfde vaste A4-maat geven als Print / PDF, ook als het venster
+          // groot of klein staat. MediaBox staat in punten: A4 is 595,28 × 841,89.
+          const box = pdf
+            .toString("latin1")
+            .match(/\/MediaBox\s*\[\s*([\d.]+)\s+([\d.]+)\s+([\d.]+)\s+([\d.]+)\s*\]/);
+          const breedte = box ? Number(box[3]) - Number(box[1]) : 0;
+          const hoogte = box ? Number(box[4]) - Number(box[2]) : 0;
+          uitslag.uitslagen.push({
+            naam: "de laatste aanmaning past op één A4",
+            ok: paginas === 1,
+            detail: `${paginas} pagina${paginas === 1 ? "" : "'s"}`,
+          });
+          uitslag.uitslagen.push({
+            naam: "de PDF heeft het vaste A4-formaat",
+            ok: Math.abs(breedte - 595.28) < 2 && Math.abs(hoogte - 841.89) < 2,
+            detail: box ? `${breedte.toFixed(2)}×${hoogte.toFixed(2)} pt` : "geen MediaBox",
+          });
+          uitslag.uitslagen.push({
+            naam: "de PDF wordt als .pdf-bestand opgeslagen",
+            ok: /\.pdf$/i.test(geschreven) && pdf.length > 0,
+            detail: `${path.basename(geschreven)} · ${pdf.length} bytes`,
+          });
+        } catch (fout) {
+          uitslag.uitslagen.push({
+            naam: "de laatste aanmaning wordt als PDF opgeslagen",
+            ok: false,
+            detail: fout instanceof Error ? fout.message : String(fout),
+          });
+        } finally {
+          if (geschreven) rmSync(geschreven, { force: true });
+        }
+
+        // De knop in de app zelf: de pagina vraagt het hoofdproces om de brief op te slaan, dat
+        // opent de bestandskeuze en schrijft de PDF. Voor de test vervangen we alleen die keuze,
+        // zodat er geen venster nodig is; de knop, de brug en het schrijven blijven de echte weg.
+        const knopDoel = path.join(app.getPath("temp"), `helder-knop-${Date.now()}.pdf`);
+        const origineleOpslag = dialog.showSaveDialog;
+        let dialoogAanroepen = 0;
+        let geklikt = false;
+        dialog.showSaveDialog = async () => {
+          dialoogAanroepen++;
+          return { canceled: false, filePath: knopDoel };
+        };
+        try {
+          const uitslagVanKlik = await venster.webContents.executeJavaScript(`(async () => {
+            const knop = [...document.querySelectorAll("button")].find((k) =>
+              (k.textContent || "").includes("PDF opslaan")
+            );
+            if (!knop) return { geklikt: false };
+            knop.click();
+            return { geklikt: true };
+          })()`);
+          geklikt = !!uitslagVanKlik?.geklikt;
+          const einde = Date.now() + 10000;
+          while (!existsSync(knopDoel) && Date.now() < einde) {
+            await new Promise((klaar) => setTimeout(klaar, 100));
+          }
+          const pdf = existsSync(knopDoel) ? readFileSync(knopDoel) : Buffer.alloc(0);
+          const paginas = (pdf.toString("latin1").match(/\/Type\s*\/Page[^s]/g) || []).length;
+          uitslag.uitslagen.push({
+            naam: "de knop PDF opslaan schrijft de brief zonder printdialoog",
+            ok:
+              geklikt &&
+              dialoogAanroepen === 1 &&
+              pdf.subarray(0, 5).toString() === "%PDF-" &&
+              paginas === 1,
+            detail: `${geklikt ? "geklikt" : "geen knop"} · opslagkeuze ${dialoogAanroepen}× · ${paginas} pagina${paginas === 1 ? "" : "'s"} · ${pdf.length} bytes`,
+          });
+        } catch (fout) {
+          uitslag.uitslagen.push({
+            naam: "de knop PDF opslaan schrijft de brief zonder printdialoog",
+            ok: false,
+            detail: fout instanceof Error ? fout.message : String(fout),
+          });
+        } finally {
+          dialog.showSaveDialog = origineleOpslag;
+          rmSync(knopDoel, { force: true });
+        }
+      }
       gevallen.push({ naam: geval.naam, uitslagen: uitslag.uitslagen });
     }
 

@@ -62,6 +62,13 @@ export interface TipMelding {
   gegevens?: TipGegevens;
 }
 
+/** De uitkomst van een PDF-opslag: het pad alleen als het bestand echt geschreven is. */
+export interface PdfOpslag {
+  opgeslagen: boolean;
+  pad: string | null;
+  fout: string;
+}
+
 /** De maat van het venster, en de standaardmaat die bij het huidige scherm hoort. */
 export interface Vensterstand {
   breedte: number;
@@ -83,6 +90,8 @@ interface HelderBrug {
   neemTipsOver: () => Promise<string[]>;
   vensterStand: () => Promise<Vensterstand | null>;
   vensterTerugzetten: () => Promise<Vensterstand | null>;
+  /** De huidige brief als vaste A4-PDF opslaan; de systeem-printdialoog komt er niet aan te pas. */
+  opslaanBriefPdf: (naam: string) => Promise<PdfOpslag>;
   onTip: (callback: (melding: TipMelding | null) => void) => () => void;
 }
 
@@ -95,6 +104,23 @@ declare global {
 export function desktopBrug(): HelderBrug | null {
   if (typeof window === "undefined") return null;
   return window.helder ?? null;
+}
+
+/**
+ * Laat het hoofdproces de huidige pagina als vaste A4-PDF opslaan. De renderer kiest geen pad:
+ * het hoofdproces opent de systeemopslag en schrijft pas daarna. Zo werkt de knop ook in de
+ * browserbuild gewoon niet, zonder een half bestand achter te laten.
+ */
+export async function bewaarBriefAlsPdf(naam: string): Promise<PdfOpslag> {
+  const brug = desktopBrug();
+  if (!brug) {
+    return { opgeslagen: false, pad: null, fout: "PDF opslaan werkt alleen in de desktop-app." };
+  }
+  try {
+    return await brug.opslaanBriefPdf(naam);
+  } catch {
+    return { opgeslagen: false, pad: null, fout: "Het hoofdproces gaf geen antwoord." };
+  }
 }
 
 const LEGE_STATUS: UpdateStatus = {

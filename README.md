@@ -20,6 +20,7 @@ Open daarna <http://localhost:5173/>.
 | ------------------- | ------------------------------------------------- |
 | `npm run dev`       | Dev-server met hot reload op poort 5173           |
 | `npm run build`     | Typecheck (`tsc --noEmit`) en productie-build     |
+| `npm run ci`        | Dezelfde controles als de CI-workflow, achter elkaar |
 | `npm run preview`   | De productie-build lokaal bekijken                |
 | `npm run typecheck` | Alleen de TypeScript-controle                     |
 
@@ -55,7 +56,8 @@ Open daarna <http://localhost:5173/>.
   klanten en btw per kwartaal, met een jaarfilter en CSV-export voor je accountant.
 - **Btw-aangifte** — per kwartaal de rubrieken 1a, 1b, 1c, 5a, 5b en 5c, met deadline,
   indienstatus, onderbouwing en CSV-export.
-- **Instellingen** — bedrijfsgegevens, IBAN, betaaltermijn, automatisch klaarzetten van
+- **Instellingen** — bedrijfsgegevens met één eigen logo (ook in de kop van de publieke
+  betaalregeling), IBAN, betaaltermijn, automatisch klaarzetten van
   aanmaningen aan/uit, JSON-back-up downloaden én terugzetten (met validatie) en de hele
   administratie wissen. Kies je als rechtsvorm *stichting* of *vereniging*, dan blijft het
   btw-nummer buiten beeld (die organisaties zijn meestal niet btw-plichtig); met één vinkje
@@ -79,6 +81,8 @@ src/bank.ts             CSV-parser voor bankafschriften en factuurherkenning
 src/reminders.ts        niveaus, incassokosten en briefteksten voor herinneringen en aanmaningen
 src/paymentPlans.ts     betaalregelingen: termijnen, aflosschema, voortgang en achterstand
 src/planLink.ts         deelbare acceptatielink, bevestigingscode en iDEAL-betaallink
+src/logo.ts             compacte logovariant voor de deelbare betaalregeling
+src/qr.ts               QR-code van de deellink voor de aanmaningsbrief
 src/lib.ts              valuta, datums, documentberekeningen, CSV en download
 src/store.tsx           React-context met localStorage-persistentie
 src/components/         iconen, modals, formulieren, toast, factuur- en offertedocument
@@ -126,7 +130,15 @@ src/styles.css          design system en print-stijl
 - De brief is een printbare pagina met bedrijfsgegevens, factuurgegevens, onderwerp, aanhef en
   sluiting. De laatste aanmaning vermeldt de buitengerechtelijke incassokosten volgens de
   wettelijke staffel (minimaal € 40, nooit meer dan de openstaande hoofdsom) en de wettelijke
-  rente.
+  rente. Alle drie de brieven delen dezelfde compacte printopmaak; de laatste brief past
+  standaard op één A4 doordat het betaalschema en de QR naast elkaar staan, net als de
+  handtekening en de totalen.
+- In de desktop-app staat op de laatste aanmaning **PDF opslaan**: Helder schrijft de brief met
+  dezelfde vaste A4-opmaak als Print / PDF, zonder de printdialoog van het systeem. Je kiest
+  alleen waar het bestand komt te staan.
+- Met **A4-voorbeeld** bekijk je elke brief vóór het printen op een vel van 210 × 297 mm. Helder
+  zet daarvoor tijdelijk de printopmaak op het scherm, dus je ziet dezelfde marges, leesmaat en
+  paginagrootte als op papier. Sluiten kan met de knop in de balk of met Escape.
 - "Markeer als verzonden" legt vast wat er is verstuurd, met datum en niveau. Verstuurde brieven
   staan op de factuur en in het overzicht, en zijn daar ook weer te verwijderen.
 - Automatisch klaarzetten (aan te zetten in de instellingen) werkt met drempels van 14, 30 en 60
@@ -155,6 +167,13 @@ src/styles.css          design system en print-stijl
   of de termijnen echt betaald zijn: de datums gelden als afspraak.
 - Bij de regeling hoort een **deelbare link** (`#/regeling/…`). De klant opent die zonder account,
   ziet het aflosschema en geeft akkoord; het tijdstip van akkoord wordt in de pagina vastgelegd.
+  Het bedrijfslogo staat linksboven op die pagina, ook op de bevestiging die de klant na zijn
+  akkoord print. Omdat de link alles zelf moet meedragen, reist alleen een thumbnail mee (binnen
+  132 × 72 pixels en 1400 tekens), nooit het originele bestand; zo blijft de link in mail en chat
+  werkbaar. Zonder logo staan de initialen er, net als op papier.
+- De laatste aanmaning toont die deellink als **QR-code** in plaats van de lange URL, zodat de
+  klant hem met zijn telefoon opent en de brief leesbaar blijft. De QR is 48 mm en bevat dezelfde
+  link; past de link niet in een QR-code, dan blijft de URL als terugval staan.
   Omdat Helder lokaal draait en geen server heeft, stuurt de klant de **bevestigingscode** terug
   (kopiëren of via de mailknop). Op de aanmaningenpagina plak je die code bij de regeling; Helder
   controleert dat de code bij precies die afspraak en dat aflosschema hoort en zet het akkoord met
@@ -496,7 +515,8 @@ Kort gezegd:
 - Er is geen garantie: de software wordt geleverd "as is".
 
 De volledige tekst gaat mee met de installer (`resources/LICENSE`) en is in de app te openen via
-**Help → Licentie (AGPL-3.0)**.
+**Help → Licentie (AGPL-3.0)**. QR-codes worden gemaakt met
+[qrcode-generator](https://github.com/kazuhikoarase/qrcode-generator) (MIT).
 
 Elk bronbestand begint met een korte header met de SPDX-regel `AGPL-3.0-only`:
 
@@ -509,10 +529,12 @@ npm run license:check   # faalt als een bronbestand de header mist (handig in CI
 
 - Bijdragen vallen onder dezelfde AGPL-3.0-licentie; door een pull request in te dienen ga je
   daarmee akkoord.
-- Draai vóór een pull request `npm run typecheck`, `npm test` en `npm run license:check`.
-  `npm test` bouwt eerst en loopt daarna de btw-test in de echte app door; dat duurt ongeveer
-  tien seconden. De test krijgt een eigen tijdelijke profielmap mee, dus je administratie
-  blijft buiten schot en de app mag gewoon openstaan.
+- Draai vóór een pull request `npm run ci`: dezelfde controles als de CI-workflow, in dezelfde
+  volgorde — licentieheaders, typecheck en build, de btw-test in de echte app, de app-map en de
+  hashcontrole. Losse stappen kunnen ook: `npm run typecheck`, `npm test` en
+  `npm run license:check`. `npm test` bouwt eerst en loopt daarna de btw-test in de echte app
+  door; dat duurt ongeveer een minuut. De test krijgt een eigen tijdelijke profielmap mee, dus je
+  administratie blijft buiten schot en de app mag gewoon openstaan.
 - Elke pull request draait [CI](.github/workflows/ci.yml): licentiecontrole, typecheck en build,
   de **btw-test** (`node scripts/test-btw.mjs`, op een Windows-runner), het bouwen van
   de app-map en de hashcontrole. Een PR waarin de btw-regel voor stichting of vereniging breekt

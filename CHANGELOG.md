@@ -6,6 +6,24 @@ voordat je een update installeert.
 
 ## 0.1.7 — 18 oktober 2026
 
+- Een eigen logo op je facturen, offertes en aanmaningsbrieven: kies het in Instellingen →
+  Bedrijfsgegevens, en het staat daarna linksboven op elk document.
+- Dat logo staat nu ook boven de publieke betaalregeling die je klant via de deellink opent, en
+  op de bevestiging die hij daarvan print. De link krijgt alleen een compacte thumbnail mee,
+  zodat hij in mail en chat behapbaar blijft.
+- De laatste aanmaning toont de deellink als QR-code, zodat de lange URL niet meer voluit op
+  papier hoeft. De klant scant hem met zijn telefoon en geeft online akkoord.
+- Printen en PDF maken houden nu ook marge als een printer of printdialoog de paginamarge
+  negeert. De vaste regel “Pagina 1 / 1” is weg.
+- De laatste aanmaning past standaard op één A4: het betaalschema en de QR staan naast elkaar,
+  de adressen ook, en de handtekening staat naast de totalen.
+- De gewone aanmaning en betaalherinnering gebruiken dezelfde compacte printopmaak, zodat de
+  drie brieven er hetzelfde uitzien.
+- In de desktop-app sla je de laatste aanmaning direct als PDF op met de vaste A4-opmaak. De
+  knop **PDF opslaan** opent alleen de bestandskeuze, niet de printdialoog van het systeem.
+- Op de briefpagina bekijk je elke brief vóór het printen als **A4-printvoorbeeld**: Helder zet
+  daarvoor tijdelijk de printopmaak op het scherm, met dezelfde marges, leesmaat en paginamaat.
+  Sluiten kan met de knop of met Escape.
 - Nieuwe knop Versiegeschiedenis in de update-kaart, met per versie wat er is veranderd.
 - De app toont overal zijn echte versienummer, in plaats van een vaste waarde.
 - Struikelt Helder zelf, dan schrijft de app dat op in `fouten.log` in je gegevensmap. In

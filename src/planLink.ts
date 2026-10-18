@@ -11,12 +11,27 @@ import type { Company, PaymentPlan } from "./types";
 // stuurt zijn akkoord terug als bevestigingscode. Zo werkt het ook zonder backend.
 export const PLAN_LINK_VERSION = 1;
 const ACCEPTANCE_PREFIX = "AKK1-";
+// Een deellink gaat door e-mail, chat en de prullenbak van de klant. Het logo reist mee als
+// compacte thumbnail, nooit als het originele bestand: zo blijft de link behapbaar.
+export const MAX_PLAN_LOGO_CHARS = 1400;
+const MAX_PLAN_LINK_CHARS = 6000;
+const PLAN_LOGO_PATTERN = /^data:image\/(png|jpe?g|webp);base64,[A-Za-z0-9+/=]+$/;
 
 export interface PlanLinkCompany {
   naam: string;
   email: string;
   iban: string;
   telefoon: string;
+  // Alleen de kleine variant uit Company.logoKlein, en alleen als die binnen de grens past.
+  logo?: string;
+}
+
+// Alleen een echte, kleine afbeeldingsdata-URL komt in de link terecht. Zo kan een bewerkte
+// administratie of back-up geen externe afbeelding of een megagroot logo meesturen.
+export function normalisePlanLogo(raw: unknown): string {
+  if (typeof raw !== "string") return "";
+  const value = raw.trim();
+  return PLAN_LOGO_PATTERN.test(value) && value.length <= MAX_PLAN_LOGO_CHARS ? value : "";
 }
 
 export interface PlanLinkData {
@@ -123,6 +138,7 @@ export function planLinkData(
   bedrijf: Company
 ): PlanLinkData {
   const betaalLink = normalisePaymentLink(plan.betaalLink);
+  const logo = normalisePlanLogo(bedrijf.logoKlein);
   return {
     v: PLAN_LINK_VERSION,
     planId: plan.id,
@@ -133,6 +149,7 @@ export function planLinkData(
       email: bedrijf.email,
       iban: bedrijf.iban,
       telefoon: bedrijf.telefoon,
+      ...(logo ? { logo } : {}),
     },
     termijnen: plan.termijnen,
     totaal: plan.totaal,
@@ -148,7 +165,7 @@ export function encodePlanLink(data: PlanLinkData): string {
 }
 
 export function decodePlanLink(token: string | undefined): PlanLinkData | null {
-  if (!token) return null;
+  if (!token || token.length > MAX_PLAN_LINK_CHARS) return null;
   let parsed: unknown;
   try {
     parsed = JSON.parse(fromBase64Url(token));
@@ -178,6 +195,7 @@ export function decodePlanLink(token: string | undefined): PlanLinkData | null {
     data.intervalDagen > 0 &&
     isISODate(data.eersteTermijn);
   if (!geldig) return null;
+  const logo = normalisePlanLogo(bedrijf!.logo);
   return {
     ...(data as PlanLinkData),
     bedrijf: {
@@ -185,6 +203,7 @@ export function decodePlanLink(token: string | undefined): PlanLinkData | null {
       email: bedrijf!.email!,
       iban: bedrijf!.iban || "",
       telefoon: bedrijf!.telefoon || "",
+      ...(logo ? { logo } : {}),
     },
     // Een ongeldige of vreemde betaallink negeren we; de klant kan altijd nog overmaken.
     betaalLink: normalisePaymentLink(data.betaalLink) ?? undefined,

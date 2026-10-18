@@ -5,12 +5,15 @@
 // Dit bestand is vrije software: je mag het verspreiden en/of aanpassen onder de
 // voorwaarden van de GNU Affero General Public License, versie 3. Zie LICENSE.
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
+import { CompanyLogo } from "../components/CompanyLogo";
+import { bewaarBriefAlsPdf, desktopBrug } from "../desktop";
 import { Icon } from "../components/Icon";
+import { PaymentPlanQr } from "../components/PaymentPlanQr";
 import { useToast } from "../components/Toast";
 import { useTitle } from "../hooks";
-import { copyText, eur, fmtDate, initials, invoiceState, invoiceTotals, todayISO, uid } from "../lib";
+import { copyText, eur, fmtDate, invoiceState, invoiceTotals, todayISO, uid } from "../lib";
 import {
   normalisePaymentLink,
   paymentLinkHost,
@@ -34,6 +37,37 @@ import type { ReminderLevel } from "../types";
 
 function isLevel(value: number): value is ReminderLevel {
   return value === 1 || value === 2 || value === 3;
+}
+
+/**
+ * Zet de printregels tijdelijk op het scherm voor het A4-voorbeeld. De browser kent maar één
+ * printstand; door elke @media print-regel naar "all" te zetten, zien we precies dezelfde marges,
+ * leesmaat en paginamaat als bij Print / PDF. Zo is het voorbeeld geen nabouw van de opmaak maar
+ * de opmaak zelf. De teruggegeven functie zet alles weer terug.
+ */
+function zetPrintregelsOpScherm(): () => void {
+  const herstel: Array<() => void> = [];
+  for (const blad of Array.from(document.styleSheets)) {
+    let regels: CSSRuleList;
+    try {
+      regels = blad.cssRules;
+    } catch {
+      // Een stylesheet zonder leestoegang telt niet mee.
+      continue;
+    }
+    for (const regel of Array.from(regels)) {
+      if (regel instanceof CSSMediaRule && regel.conditionText === "print") {
+        const vorige = regel.media.mediaText;
+        regel.media.mediaText = "all";
+        herstel.push(() => {
+          regel.media.mediaText = vorige;
+        });
+      }
+    }
+  }
+  return () => {
+    for (const zetTerug of herstel) zetTerug();
+  };
 }
 
 export function ReminderLetterPage() {
@@ -65,6 +99,34 @@ export function ReminderLetterPage() {
   // De betaallink staat naast de deellink: de klant betaalt er de eerste termijn mee.
   const [betaalLink, setBetaalLink] = useState(actieveRegeling?.betaalLink ?? "");
   const [linkFout, setLinkFout] = useState("");
+  const [pdfBezig, setPdfBezig] = useState(false);
+  const pdfBeschikbaar = !!desktopBrug();
+  const [voorbeeld, setVoorbeeld] = useState(false);
+  const sluitVoorbeeld = useRef<HTMLButtonElement>(null);
+
+  // Het A4-voorbeeld zet de printopmaak tijdelijk op het scherm. Sluiten met Escape hoort
+  // daarbij, net als de knop in de voorbeeldbalk.
+  useEffect(() => {
+    if (!voorbeeld) return;
+    const vorigeFocus = document.activeElement as HTMLElement | null;
+    const vorigeScroll = window.scrollY;
+    const herstelPrint = zetPrintregelsOpScherm();
+    document.body.classList.add("brief-preview-open");
+    window.scrollTo(0, 0);
+    const frame = requestAnimationFrame(() => sluitVoorbeeld.current?.focus());
+    const bijToets = (gebeurtenis: KeyboardEvent) => {
+      if (gebeurtenis.key === "Escape") setVoorbeeld(false);
+    };
+    document.addEventListener("keydown", bijToets);
+    return () => {
+      cancelAnimationFrame(frame);
+      document.removeEventListener("keydown", bijToets);
+      document.body.classList.remove("brief-preview-open");
+      herstelPrint();
+      vorigeFocus?.focus();
+      window.scrollTo(0, vorigeScroll);
+    };
+  }, [voorbeeld]);
 
   useTitle(invoice ? `Brief ${invoice.nummer}` : "Betaalbrief");
 
@@ -202,6 +264,21 @@ export function ReminderLetterPage() {
     toast(ok ? "Deellink gekopieerd — stuur hem naar de klant" : "Kopieer de link uit het veld");
   }
 
+  async function bewaarPdf() {
+    if (pdfBezig) return;
+    setPdfBezig(true);
+    try {
+      const uitslag = await bewaarBriefAlsPdf(`Laatste aanmaning ${invoice!.nummer}`);
+      if (uitslag.opgeslagen) {
+        toast(`PDF opgeslagen${uitslag.pad ? `: ${uitslag.pad}` : ""}`);
+      } else if (uitslag.fout) {
+        toast(`PDF opslaan mislukt: ${uitslag.fout}`);
+      }
+    } finally {
+      setPdfBezig(false);
+    }
+  }
+
   // Leegmaken mag: dan betaalt de klant de eerste termijn gewoon per overboeking.
   function saveBetaalLink() {
     const raw = betaalLink.trim();
@@ -228,6 +305,32 @@ export function ReminderLetterPage() {
 
   return (
     <>
+      {voorbeeld ? (
+        <>
+          {/* Alleen voor het scherm: bij een echte afdruk hoort de balk er niet op. */}
+          <style media="print">{`.brief-preview-bar { display: none !important; }`}</style>
+          <div className="brief-preview-bar" role="region" aria-label="A4-printvoorbeeld">
+            <span className="brief-preview-label">
+              <Icon name="fileText" size={15} /> A4-printvoorbeeld
+            </span>
+            <span className="brief-preview-size">210 × 297 mm</span>
+            <span className="brief-preview-hint">Zo komt de brief op papier</span>
+            <div className="brief-preview-actions">
+              <button className="btn btn-primary" type="button" onClick={() => window.print()}>
+                <Icon name="printer" size={14} /> Print / PDF
+              </button>
+              <button
+                className="btn"
+                type="button"
+                onClick={() => setVoorbeeld(false)}
+                ref={sluitVoorbeeld}
+              >
+                <Icon name="x" size={14} /> Sluiten
+              </button>
+            </div>
+          </div>
+        </>
+      ) : null}
       <div className="page-head no-print">
         <div>
           <Link className="back-link" to="/aanmaningen">
@@ -290,6 +393,20 @@ export function ReminderLetterPage() {
               <Icon name="copy" size={14} /> Deellink
             </button>
           ) : null}
+          {pdfBeschikbaar && niveau === 3 ? (
+            <button className="btn" type="button" onClick={bewaarPdf} disabled={pdfBezig}>
+              <Icon name="download" size={14} /> {pdfBezig ? "Bezig…" : "PDF opslaan"}
+            </button>
+          ) : null}
+          <button
+            className="btn"
+            type="button"
+            onClick={() => setVoorbeeld(true)}
+            aria-pressed={voorbeeld}
+            title="Bekijk de brief op A4-formaat voordat je print"
+          >
+            <Icon name="fileText" size={14} /> A4-voorbeeld
+          </button>
           <button className="btn" type="button" onClick={() => window.print()}>
             <Icon name="printer" size={14} /> Print / PDF
           </button>
@@ -386,10 +503,10 @@ export function ReminderLetterPage() {
       ) : null}
 
       <div className="paper-wrap">
-        <div className="paper print-page">
+        <div className={`paper print-page paper-brief${niveau === 3 ? " paper-laatste" : ""}`}>
           <div className="paper-head">
             <div className="paper-brand">
-              <span className="mark">{initials(bedrijf.naam)}</span>
+              <CompanyLogo company={bedrijf} />
               <span>
                 <strong>{bedrijf.naam}</strong>
                 <span>
@@ -430,9 +547,7 @@ export function ReminderLetterPage() {
               {bedrijf.adres}
               <br />
               {bedrijf.postcode} {bedrijf.plaats}
-              <br />
-              <br />
-              <span className="muted">
+              <span className="muted paper-contact">
                 IBAN {bedrijf.iban}
                 <br />
                 {bedrijf.email}
@@ -483,66 +598,69 @@ export function ReminderLetterPage() {
                     {fmtDate(regeling.eersteTermijn)}
                   </span>
                 </div>
-                <table>
-                  <thead>
-                    <tr>
-                      <th>Termijn</th>
-                      <th>Vervaldatum</th>
-                      <th className="num">Bedrag</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {regeling.schema.map((termijn) => (
-                      <tr key={termijn.nummer}>
-                        <td>Termijn {termijn.nummer}</td>
-                        <td>{fmtDate(termijn.datum)}</td>
-                        <td className="num">{eur(termijn.bedrag)}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-                <p className="letter-plan-note">
-                  Het schema gaat uit van het openstaande factuurbedrag van {eur(regeling.totaal)}.
-                  Zolang je deze termijnen op tijd betaalt, pauzeren wij de aanmaningen en vervallen de
-                  incassokosten en de wettelijke rente.
-                </p>
-                <p className="letter-plan-link">
-                  Online akkoord geven kan via <span>{deelLink}</span>
-                </p>
+                <div className="letter-plan-body">
+                  <div className="letter-plan-schema">
+                    <table>
+                      <thead>
+                        <tr>
+                          <th>Termijn</th>
+                          <th>Vervaldatum</th>
+                          <th className="num">Bedrag</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {regeling.schema.map((termijn) => (
+                          <tr key={termijn.nummer}>
+                            <td>Termijn {termijn.nummer}</td>
+                            <td>{fmtDate(termijn.datum)}</td>
+                            <td className="num">{eur(termijn.bedrag)}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                    <p className="letter-plan-note">
+                      Het schema gaat uit van het openstaande factuurbedrag van {eur(regeling.totaal)}.
+                      Kies je hiervoor, dan geldt dit schema in plaats van de betaaltermijn hierboven.
+                      Zolang je de termijnen op tijd betaalt, pauzeren wij de aanmaningen en vervallen de
+                      incassokosten en de wettelijke rente.
+                    </p>
+                  </div>
+                  <PaymentPlanQr link={deelLink} />
+                </div>
               </div>
             ) : null}
-            <p>
+          </div>
+
+          <div className="letter-end">
+            <p className="letter-signature">
               {letter.sluiting}
-              <br />
               <br />
               <strong>{bedrijf.eigenaar}</strong>
               <br />
               {bedrijf.naam}
             </p>
+            {niveau === 3 ? (
+              <div className="paper-totals letter-summary">
+                <div className="row">
+                  <span>Openstaand bedrag</span>
+                  <span className="v">{eur(letter.bedrag)}</span>
+                </div>
+                <div className="row">
+                  <span>Buitengerechtelijke incassokosten</span>
+                  <span className="v">{eur(letter.incassokosten)}</span>
+                </div>
+                <div className="row total">
+                  <span>Totaal te betalen</span>
+                  <span className="v">{eur(letter.totaal)}</span>
+                </div>
+              </div>
+            ) : null}
           </div>
-
-          {niveau === 3 ? (
-            <div className="paper-totals letter-summary">
-              <div className="row">
-                <span>Openstaand bedrag</span>
-                <span className="v">{eur(letter.bedrag)}</span>
-              </div>
-              <div className="row">
-                <span>Buitengerechtelijke incassokosten</span>
-                <span className="v">{eur(letter.incassokosten)}</span>
-              </div>
-              <div className="row total">
-                <span>Totaal te betalen</span>
-                <span className="v">{eur(letter.totaal)}</span>
-              </div>
-            </div>
-          ) : null}
 
           <div className="paper-foot">
             <span>
               {bedrijf.naam} · {bedrijf.email} · {bedrijf.telefoon} · {bedrijf.website}
             </span>
-            <span>Pagina 1 / 1</span>
           </div>
         </div>
       </div>

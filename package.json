@@ -10,6 +10,7 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc --noEmit && vite build",
+    "ci": "node scripts/ci.mjs",
     "preview": "vite preview",
     "icons": "node scripts/make-icons.mjs",
     "desktop": "npm run build && electron .",
@@ -26,6 +27,7 @@
   },
   "dependencies": {
     "electron-updater": "^6.8.9",
+    "qrcode-generator": "^2.0.4",
     "react": "^19.3.1",
     "react-dom": "^19.3.1",
     "react-router-dom": "^7.18.4"

@@ -20,7 +20,7 @@ import {
   uid,
   vatDeadline,
 } from "./lib";
-import { normalisePaymentLink } from "./planLink";
+import { normalisePaymentLink, normalisePlanLogo } from "./planLink";
 import type {
   AppState,
   BankTransaction,
@@ -51,6 +51,8 @@ const MIGRATABLE_VERSIONS = [STATE_VERSION];
 // gebruiker vult eerst het eigen bedrijf in via de wizard (zie src/pages/OnboardingPage.tsx).
 const LEEG_BEDRIJF: Company = {
   naam: "",
+  logo: "",
+  logoKlein: "",
   rechtsvorm: "Eenmanszaak",
   eigenaar: "",
   kvk: "",
@@ -190,9 +192,22 @@ export function normalizeState(input: unknown): AppState | null {
     return null;
   }
 
+  // Een logo is één data-URL van een klein plaatje. Alleen die vorm komt door de controle; zo
+  // kan een handmatig aangepaste back-up geen externe afbeelding of een enorm bestand meeslepen.
+  const bedrijf = parsed.bedrijf;
+  const logo =
+    typeof bedrijf.logo === "string" &&
+    /^data:image\/(png|jpe?g|webp);base64,/.test(bedrijf.logo) &&
+    bedrijf.logo.length <= 700_000
+      ? bedrijf.logo
+      : "";
+  // De compacte variant hoort bij het logo en is nooit groter dan wat er in een deellink past.
+  const logoKlein = logo ? normalisePlanLogo(bedrijf.logoKlein) : "";
+
   return {
     ...(parsed as AppState),
     versie: STATE_VERSION,
+    bedrijf: { ...bedrijf, logo, logoKlein },
     offertes: Array.isArray(parsed.offertes) ? parsed.offertes : seedQuotes(),
     producten: Array.isArray(parsed.producten) ? parsed.producten : seedProducts(),
     herhalingen: Array.isArray(parsed.herhalingen) ? parsed.herhalingen : seedRecurring(),

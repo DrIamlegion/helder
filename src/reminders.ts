@@ -17,7 +17,6 @@ import {
 } from "./lib";
 import {
   activePaymentPlan,
-  intervalLabel,
   planVoorstel,
   type PaymentPlanVoorstel,
 } from "./paymentPlans";
@@ -365,15 +364,6 @@ export function reminderLetter(
         totaal
       )} komt. Vanaf 14 dagen na deze brief brengen wij daarnaast de wettelijke rente in rekening.`
     );
-    if (regeling) {
-      alineas.push(
-        `Liever in termijnen betalen? Dat kan: wij stellen voor het bedrag in ${regeling.termijnen} termijnen van ${eur(
-          regeling.bedragPerTermijn
-        )} te voldoen, de eerste voor ${fmtDate(regeling.eersteTermijn)} en daarna ${
-          intervalLabel(regeling.intervalDagen)
-        }. Kies je hiervoor, dan geldt dat aflosschema in plaats van de bovengenoemde betaaltermijn. Zolang je deze termijnen op tijd betaalt, pauzeren wij de aanmaningen en brengen wij de incassokosten en de wettelijke rente niet in rekening.`
-      );
-    }
     alineas.push(
       `Wil je een andere verdeling of hierover afspraken maken? Neem dan vandaag nog contact op via ${
         bedrijf.email

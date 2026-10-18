@@ -5,8 +5,9 @@
 // Dit bestand is vrije software: je mag het verspreiden en/of aanpassen onder de
 // voorwaarden van de GNU Affero General Public License, versie 3. Zie LICENSE.
 
-import { eur, fmtDate, initials, invoiceTotals, lineTotals, quoteState } from "../lib";
+import { eur, fmtDate, invoiceTotals, lineTotals, quoteState } from "../lib";
 import type { Company, Customer, Quote } from "../types";
+import { CompanyLogo } from "./CompanyLogo";
 import { QuoteBadge } from "./QuoteBadge";
 
 interface QuoteDocumentProps {
@@ -33,7 +34,7 @@ export function QuoteDocument({ quote, company, customer }: QuoteDocumentProps) 
     <div className="paper print-page">
       <div className="paper-head">
         <div className="paper-brand">
-          <span className="mark">{initials(company.naam)}</span>
+          <CompanyLogo company={company} />
           <span>
             <strong>{company.naam}</strong>
             <span>
@@ -174,7 +175,6 @@ export function QuoteDocument({ quote, company, customer }: QuoteDocumentProps) 
         <span>
           {company.naam} · {company.email} · {company.telefoon} · {company.website}
         </span>
-        <span>Pagina 1 / 1</span>
       </div>
     </div>
   );

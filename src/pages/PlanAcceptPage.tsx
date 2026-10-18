@@ -91,7 +91,11 @@ function PlanAcceptView({ token }: { token: string | undefined }) {
   return (
     <div className="public-page">
       <header className="public-top">
-        <span className="mark">{initials(data.bedrijf.naam)}</span>
+        {data.bedrijf.logo ? (
+          <img className="public-logo" src={data.bedrijf.logo} alt="" />
+        ) : (
+          <span className="mark">{initials(data.bedrijf.naam)}</span>
+        )}
         <div>
           <strong>{data.bedrijf.naam}</strong>
           <span>Betaalregeling · factuur {data.nummer}</span>

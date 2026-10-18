@@ -272,6 +272,14 @@ table.table { width: 100%; border-collapse: collapse; font-size: 13.2px; }
 .form-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 15px 16px; }
 .form-grid .span-2 { grid-column: span 2; }
 .form-grid.three { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.logo-field { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; padding-bottom: 18px; margin-bottom: 18px; border-bottom: 1px solid var(--line); }
+.logo-preview { width: 104px; height: 64px; flex: none; display: grid; place-items: center; border: 1px dashed var(--line-strong); border-radius: 10px; background: var(--surface-2); overflow: hidden; }
+.logo-preview img { max-width: 100%; max-height: 100%; object-fit: contain; display: block; }
+.logo-placeholder { width: 30px; height: 30px; border-radius: 8px; background: var(--brand); color: #fff; display: grid; place-items: center; font-weight: 700; font-size: 14px; }
+.logo-keuze { display: flex; flex-direction: column; gap: 7px; min-width: 220px; }
+.logo-label { font-size: 12.2px; font-weight: 580; color: var(--ink-2); }
+.logo-buttons { display: flex; gap: 8px; flex-wrap: wrap; }
+.logo-keuze .hint { font-size: 11.5px; color: var(--muted); }
 .form-actions { display: flex; align-items: center; gap: 9px; justify-content: flex-end; margin-top: 20px; }
 .form-actions .left { margin-right: auto; }
 
@@ -293,7 +301,7 @@ table.table { width: 100%; border-collapse: collapse; font-size: 13.2px; }
 .page-head { display: flex; align-items: flex-end; gap: 18px; margin-bottom: 20px; flex-wrap: wrap; }
 .page-head h2 { font-size: 24px; font-weight: 660; letter-spacing: -.03em; line-height: 1.15; }
 .page-head p { color: var(--muted); font-size: 13px; margin-top: 4px; }
-.page-head .actions { margin-left: auto; display: flex; gap: 8px; align-items: center; }
+.page-head .actions { margin-left: auto; display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px; align-items: center; }
 
 /* dashboard */
 .dash-grid { display: grid; grid-template-columns: minmax(0, 1.62fr) minmax(0, 1fr); gap: 16px; margin-top: 16px; align-items: start; }
@@ -384,6 +392,7 @@ table.table { width: 100%; border-collapse: collapse; font-size: 13.2px; }
 .paper-head { display: flex; justify-content: space-between; gap: 30px; }
 .paper-brand { display: flex; gap: 10px; align-items: center; }
 .paper-brand .mark { width: 30px; height: 30px; border-radius: 8px; background: var(--brand); color: #fff; display: grid; place-items: center; font-weight: 700; font-size: 14px; }
+.paper-logo { max-width: 130px; max-height: 42px; object-fit: contain; display: block; }
 .paper-brand strong { font-size: 14px; display: block; letter-spacing: -.01em; }
 .paper-brand span { font-size: 11.5px; color: var(--muted); }
 .paper h2 { font-size: 25px; letter-spacing: -.03em; font-weight: 650; margin: 34px 0 4px; }
@@ -657,15 +666,106 @@ a.kpi:hover { border-color: #c9e2d6; box-shadow: 0 1px 2px rgba(16,32,27,.05), 0
 
 /* print */
 @media print {
-  @page { margin: 16mm; }
+  /* Bewust klein: de brief zelf houdt padding, zodat ook browsers en printdialogen
+     die @page negeren de tekst niet tegen de rand zetten. */
+  @page { margin: 8mm; }
   body { background: #fff; font-size: 12px; }
   .sidebar, .topbar, .page-foot, .no-print, #toast-root { display: none !important; }
   .shell { display: block; }
   .content { padding: 0; max-width: none; }
   .paper-wrap { padding: 0; }
-  .paper { border: 0; box-shadow: none; border-radius: 0; padding: 0; max-width: none; }
+  .paper { border: 0; box-shadow: none; border-radius: 0; padding: 15mm 15mm 16mm; max-width: none; }
   .print-page { break-inside: avoid; }
   .letter-plan { background: transparent; border-color: #c9cfc9; }
+
+  /* Alle aanmaningsbrieven delen dezelfde compacte printopmaak: adressen naast elkaar,
+     dezelfde leesmaat en dezelfde tussenruimte. De laatste brief zet daarbovenop het
+     betaalschema en de QR naast elkaar. */
+  .paper-brief .paper-addresses {
+    grid-template-columns: 1fr 1fr;
+    margin-top: 4mm; font-size: 11px; line-height: 1.5; gap: 10mm;
+  }
+  .paper-brief { padding-top: 15mm; padding-bottom: 15mm; }
+  .paper-brief .paper-head { align-items: center; }
+  .paper-brief .paper-logo { max-height: 9mm; max-width: 34mm; }
+  .paper-brief .paper-brand .mark { width: 9mm; height: 9mm; font-size: 11px; }
+  .paper-brief .paper-brand strong { font-size: 11.5px; }
+  .paper-brief .paper-brand span { font-size: 9.5px; }
+  .paper-brief h2 { font-size: 22px; margin: 7mm 0 1mm; }
+  .paper-brief .paper-meta { font-size: 10px; }
+  .paper-brief .paper-addresses .label { font-size: 8.5px; margin-bottom: 0.8mm; }
+  .paper-brief .paper-contact { margin-top: 2mm; }
+  .paper-brief .letter-body { margin-top: 4mm; font-size: 11.6px; line-height: 1.5; }
+  .paper-brief .letter-body p { margin-bottom: 1.8mm; }
+  .paper-brief .letter-subject { font-size: 11.2px; margin-bottom: 2mm; }
+  .paper-brief .letter-end { flex-wrap: nowrap; margin-top: 6mm; gap: 8mm; }
+  .paper-brief .letter-signature { font-size: 11.6px; line-height: 1.5; }
+  .paper-brief .paper-foot { margin-top: 2.5mm; font-size: 8.6px; }
+
+  .paper-laatste .letter-plan { margin-top: 3mm; padding: 3mm 3.5mm; }
+  .paper-laatste .letter-plan-head { margin-bottom: 1.5mm; }
+  .paper-laatste .letter-plan-head strong { font-size: 11.2px; }
+  .paper-laatste .letter-plan-head span { font-size: 9.2px; }
+  .paper-laatste .letter-plan table { font-size: 10px; margin-top: 0; }
+  .paper-laatste .letter-plan th { font-size: 7.8px; padding-bottom: 1mm; }
+  .paper-laatste .letter-plan td { padding: 1.05mm 0; }
+  .paper-laatste .letter-plan-note { font-size: 10px; line-height: 1.45; margin-top: 1.8mm; }
+  .paper-laatste .letter-plan-body { flex-wrap: nowrap; gap: 5mm; }
+  .paper-laatste .letter-plan-schema { flex: 1 1 0; }
+  .paper-laatste .letter-plan-qr { flex-direction: column; align-items: flex-start; gap: 1.2mm; margin-top: 0; }
+  .paper-laatste .letter-plan-qr img { width: 45mm; height: 45mm; }
+  .paper-laatste .letter-plan-qr p { font-size: 9.2px; line-height: 1.42; max-width: 46mm; }
+  .paper-laatste .letter-summary { width: 70mm; }
+  .paper-laatste .paper-totals .row { font-size: 10.2px; padding: 0.6mm 0; }
+  .paper-laatste .paper-totals .row.total { font-size: 11.8px; margin-top: 0.8mm; padding-top: 1.2mm; }
+}
+
+/* A4-printvoorbeeld: de printregels staan tijdelijk op het scherm (zie ReminderLetterPage).
+   Alleen voor het scherm, zodat een echte afdruk gewoon de printopmaak houdt. */
+@media screen {
+  body.brief-preview-open { background: #e6ece8; }
+  .brief-preview-open .shell { background: #e6ece8; }
+  .brief-preview-open .paper-wrap {
+    min-height: 100vh;
+    padding: 86px 24px 48px;
+    align-items: flex-start;
+  }
+  .brief-preview-open .paper {
+    width: 210mm;
+    max-width: 210mm;
+    min-height: 297mm;
+    border: 1px solid #dfe6e0;
+    border-radius: 2px;
+    box-shadow: 0 24px 60px -30px rgba(16, 32, 27, .55);
+  }
+}
+.brief-preview-bar {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 120;
+  display: flex; align-items: center; flex-wrap: wrap; gap: 8px 16px;
+  min-height: 58px; padding: 10px 22px;
+  background: #10271f; color: #eaf7f1;
+  box-shadow: 0 14px 34px -24px rgba(0, 0, 0, .75);
+}
+.brief-preview-label { display: inline-flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 620; letter-spacing: -.01em; }
+.brief-preview-size { font-size: 11.5px; color: #a9cbbd; font-variant-numeric: tabular-nums; }
+.brief-preview-hint { font-size: 11.5px; color: #a9cbbd; }
+.brief-preview-actions { margin-left: auto; display: flex; gap: 8px; flex-wrap: wrap; }
+.brief-preview-bar .btn { height: 33px; background: rgba(255, 255, 255, .08); border-color: rgba(255, 255, 255, .2); color: #eaf7f1; }
+.brief-preview-bar .btn:hover { background: rgba(255, 255, 255, .15); }
+.brief-preview-bar .btn-primary { background: var(--brand); border-color: var(--brand); color: #fff; }
+.brief-preview-bar .btn-primary:hover { background: var(--brand-strong); }
+@media (max-width: 900px) {
+  .brief-preview-hint { display: none; }
+}
+@media screen and (max-width: 880px) {
+  /* Op een smal scherm past het A4-vel niet naast de marge; dan schuift het voorbeeld
+     horizontaal in plaats van buiten beeld te vallen. */
+  .brief-preview-open .paper-wrap {
+    justify-content: flex-start;
+    overflow-x: auto;
+    padding-left: 12px;
+    padding-right: 12px;
+  }
 }
 
 /* React app additions */
@@ -804,6 +904,12 @@ body.modal-open { overflow: hidden; }
 /* Aanmaningen en betaalbrieven */
 .letter-body { margin-top: 28px; font-size: 12.6px; line-height: 1.75; color: var(--ink-2); }
 .letter-body p { margin: 0 0 12px; }
+.paper-contact { display: block; margin-top: 8px; }
+.letter-plan-body { display: flex; flex-wrap: wrap; gap: 16px; align-items: flex-start; }
+.letter-plan-schema { flex: 1 1 320px; min-width: 0; }
+.letter-end { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-end; gap: 24px; margin-top: 22px; }
+.letter-signature { margin: 0; font-size: 12.6px; line-height: 1.75; color: var(--ink-2); }
+.letter-end .letter-summary { margin: 0; flex: none; width: 250px; }
 .letter-body .letter-subject {
   font-size: 14px; font-weight: 660; color: var(--ink);
   letter-spacing: -.01em; margin-bottom: 14px;
@@ -817,7 +923,7 @@ body.modal-open { overflow: hidden; }
 .letter-plan-head { display: flex; flex-wrap: wrap; gap: 4px 12px; align-items: baseline; justify-content: space-between; margin-bottom: 10px; }
 .letter-plan-head strong { font-size: 13px; letter-spacing: -.01em; }
 .letter-plan-head span { font-size: 11.6px; color: var(--muted); }
-.letter-plan table { width: 100%; border-collapse: collapse; font-size: 12px; }
+.letter-plan table { width: 100%; border-collapse: collapse; font-size: 12px; margin-top: 0; }
 .letter-plan th {
   text-align: left; font-size: 10px; letter-spacing: .08em; text-transform: uppercase;
   color: var(--muted); font-weight: 620; padding: 0 0 6px; border-bottom: 1px solid var(--line-strong);
@@ -840,6 +946,10 @@ body.modal-open { overflow: hidden; }
   width: 36px; height: 36px; border-radius: 10px; flex: none;
   display: grid; place-items: center; background: var(--sidebar); color: #fff;
   font-weight: 650; font-size: 13px; letter-spacing: .01em;
+}
+.public-top .public-logo {
+  max-width: 132px; max-height: 36px; flex: none;
+  display: block; object-fit: contain;
 }
 .public-top strong { display: block; font-size: 14px; letter-spacing: -.01em; }
 .public-top span { display: block; font-size: 12px; color: var(--muted); }
@@ -931,6 +1041,15 @@ body.modal-open { overflow: hidden; }
 .paylink-input .input { flex: 1; min-width: 0; }
 .paylink-error { margin: 0; font-size: 12px; color: var(--red); }
 .paylink-note { margin: 0; }
+.letter-plan-qr {
+  display: flex; align-items: center; gap: 14px; flex-wrap: wrap;
+  margin-top: 12px;
+}
+.letter-plan-qr img {
+  width: 48mm; height: 48mm; flex: none; display: block;
+  image-rendering: pixelated;
+}
+.letter-plan-qr p { margin: 0; max-width: 42ch; font-size: 10.8px; line-height: 1.55; color: var(--muted); }
 .letter-plan-link {
   margin: 10px 0 0; font-size: 9.6px; line-height: 1.5;
   color: var(--muted); word-break: break-all;
@@ -946,8 +1065,12 @@ body.modal-open { overflow: hidden; }
   .paylink-input .btn { width: 100%; }
 }
 @media print {
-  .public-page { padding: 0; background: #fff; display: block; }
-  .public-top { display: none; }
+  /* Zelfde reden als bij .paper: de eigen padding houdt de tekst van de rand,
+     ook als een printdialoog de @page-marge negeert. */
+  .public-page { padding: 15mm; background: #fff; display: block; }
+  /* Op papier hoort de bevestiging bij het bedrijf: logo en naam boven de kaart. */
+  .public-top { display: flex; width: 100%; margin-bottom: 14px; }
+  .public-top .mark { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
   .public-card { border: 0; box-shadow: none; padding: 0; width: 100%; }
   .accept-done { border-color: #c9cfc9; background: #fff; }
   .accept-actions { display: none; }
@@ -955,6 +1078,8 @@ body.modal-open { overflow: hidden; }
   .accept-pay-btn { display: none; }
   .accept-pay-url { display: block; }
   .code-box { border-color: #c9cfc9; }
+  /* Kopiëren hoort bij het scherm; op papier staat de code er om over te typen. */
+  .code-box .btn { display: none; }
   .share-row { display: none; }
   .paylink { display: none; }
 }

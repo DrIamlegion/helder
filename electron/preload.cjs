@@ -19,6 +19,7 @@ contextBridge.exposeInMainWorld("helder", {
   neemTipsOver: () => ipcRenderer.invoke("helder:tips-overnemen"),
   vensterStand: () => ipcRenderer.invoke("helder:venster-stand"),
   vensterTerugzetten: () => ipcRenderer.invoke("helder:venster-terugzetten"),
+  opslaanBriefPdf: (naam) => ipcRenderer.invoke("helder:brief-pdf", naam),
   onUpdateStatus: (callback) => {
     const luisteraar = (_gebeurtenis, status) => callback(status);
     ipcRenderer.on("helder:update", luisteraar);

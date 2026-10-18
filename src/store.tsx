@@ -16,6 +16,7 @@ import {
 } from "react";
 import { applyRecurring, normalizeState, seedState, STORAGE_KEY } from "./data";
 import { todayISO, uid } from "./lib";
+import { maakLogoKlein } from "./logo";
 import { planFingerprint } from "./planLink";
 import { applyReminders } from "./reminders";
 import type {
@@ -93,6 +94,25 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
       // Private previews can block localStorage.
     }
   }, [state]);
+
+  // Een logo uit een oudere back-up heeft nog geen compacte variant. Die maken we op de
+  // achtergrond, zodat ook zo'n administratie meteen een logo in de deellink kan meesturen.
+  useEffect(() => {
+    const bedrijf = state.bedrijf;
+    if (!bedrijf.logo || bedrijf.logoKlein) return;
+    let actief = true;
+    void maakLogoKlein(bedrijf.logo).then((klein) => {
+      if (!actief || !klein) return;
+      setState((huidig) =>
+        huidig.bedrijf.logo === bedrijf.logo && !huidig.bedrijf.logoKlein
+          ? { ...huidig, bedrijf: { ...huidig.bedrijf, logoKlein: klein } }
+          : huidig
+      );
+    });
+    return () => {
+      actief = false;
+    };
+  }, [state.bedrijf.logo, state.bedrijf.logoKlein]);
 
   const updateCompany = useCallback((company: Company) => {
     setState((current) => ({ ...current, bedrijf: { ...company } }));

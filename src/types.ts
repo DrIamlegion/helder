@@ -7,6 +7,10 @@
 
 export interface Company {
   naam: string;
+  /** Eén eigen logo als data-URL (PNG, JPG of WebP); leeg als er geen logo is. */
+  logo: string;
+  /** Compacte versie van het logo voor de deelbare betaallink; leeg zonder logo. */
+  logoKlein: string;
   rechtsvorm: string;
   eigenaar: string;
   kvk: string;

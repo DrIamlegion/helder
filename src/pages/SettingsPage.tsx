@@ -16,10 +16,15 @@ import { useTitle } from "../hooks";
 import { AUTO_DREMPELS, HERINNER_RUSTDAGEN } from "../reminders";
 import { useInstall, useOfflineGereed } from "../pwa";
 import { useFoutenlog, useUpdates, useVensterstand } from "../desktop";
-import { download, fmtDate, todayISO } from "../lib";
+import { download, fmtDate, initials, todayISO } from "../lib";
+import { maakLogoKlein } from "../logo";
 import { rechtsvormOpties, zonderBtwNummer } from "../rechtsvormen";
 import { useAppStore } from "../store";
 import type { Company } from "../types";
+
+// Een logo gaat als data-URL mee in de administratie. Houd het klein: de hele staat staat in
+// localStorage en gaat mee in elke back-up.
+const MAX_LOGO_BYTES = 500 * 1024;
 
 export function SettingsPage() {
   const { state, updateCompany, importState, reset, setAutoReminders } = useAppStore();
@@ -36,6 +41,7 @@ export function SettingsPage() {
   const [geschiedenisOpen, setGeschiedenisOpen] = useState(false);
   const [importError, setImportError] = useState("");
   const fileRef = useRef<HTMLInputElement>(null);
+  const logoRef = useRef<HTMLInputElement>(null);
   const install = useInstall();
   const offlineGereed = useOfflineGereed();
   const updates = useUpdates();
@@ -84,12 +90,49 @@ export function SettingsPage() {
     if (zonderBtwNummer(vorm)) setBtwPlichtig(false);
   }
 
-  function submit(event: FormEvent) {
+  function kiesLogo(event: ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    if (!["image/png", "image/jpeg", "image/jpg", "image/webp"].includes(file.type)) {
+      toast("Kies een PNG-, JPG- of WebP-afbeelding");
+      event.target.value = "";
+      return;
+    }
+    if (file.size > MAX_LOGO_BYTES) {
+      toast("Dit logo is te groot — kies een afbeelding van maximaal 500 kB");
+      event.target.value = "";
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = async () => {
+      const data = String(reader.result || "");
+      if (!data.startsWith("data:image/")) {
+        toast("Het logo kon niet worden gelezen. Probeer een ander bestand.");
+        return;
+      }
+      // Meteen een compacte variant maken: die gaat mee in de deellink van een betaalregeling.
+      const klein = await maakLogoKlein(data);
+      setForm((huidig) => ({ ...huidig, logo: data, logoKlein: klein }));
+      toast("Logo gekozen — klik op Opslaan om het te bewaren");
+    };
+    reader.onerror = () => toast("Het logo kon niet worden gelezen. Probeer een ander bestand.");
+    reader.readAsDataURL(file);
+    // Dezelfde afbeelding nog eens kiezen moet ook werken.
+    event.target.value = "";
+  }
+
+  async function submit(event: FormEvent) {
     event.preventDefault();
     const teBewaren: Company = {
       ...form,
       btw: zonderBtwNummer(form.rechtsvorm) && !btwPlichtig ? "" : form.btw,
     };
+    if (!teBewaren.logo) {
+      teBewaren.logoKlein = "";
+    } else if (!teBewaren.logoKlein) {
+      // Bij een logo uit een oudere back-up ontbreekt de compacte variant nog.
+      teBewaren.logoKlein = await maakLogoKlein(teBewaren.logo);
+    }
     updateCompany(teBewaren);
     setForm(teBewaren);
     toast("Bedrijfsgegevens opgeslagen");
@@ -188,6 +231,51 @@ export function SettingsPage() {
               </div>
             </div>
             <div className="card-body">
+              <div className="logo-field">
+                <div className="logo-preview">
+                  {form.logo ? (
+                    <img src={form.logo} alt="Gekozen logo" />
+                  ) : (
+                    <span className="logo-placeholder">{initials(form.naam) || "?"}</span>
+                  )}
+                </div>
+                <div className="logo-keuze">
+                  <span className="logo-label">Logo</span>
+                  <div className="logo-buttons">
+                    <button
+                      type="button"
+                      className="btn btn-sm"
+                      onClick={() => logoRef.current?.click()}
+                    >
+                      <Icon name="upload" size={13} />
+                      {form.logo ? "Ander logo" : "Logo kiezen"}
+                    </button>
+                    {form.logo ? (
+                      <button
+                        type="button"
+                        className="btn btn-sm btn-ghost"
+                        onClick={() =>
+                          setForm((huidig) => ({ ...huidig, logo: "", logoKlein: "" }))
+                        }
+                      >
+                        <Icon name="trash" size={13} /> Verwijderen
+                      </button>
+                    ) : null}
+                  </div>
+                  <span className="hint">
+                    Eén logo, PNG/JPG/WebP tot 500 kB. Het staat linksboven op je facturen,
+                    offertes en aanmaningsbrieven, en in de kop van de publieke betaalregeling.
+                  </span>
+                  <input
+                    ref={logoRef}
+                    id="logo"
+                    type="file"
+                    accept="image/png,image/jpeg,image/webp"
+                    style={{ display: "none" }}
+                    onChange={kiesLogo}
+                  />
+                </div>
+              </div>
               <div className="form-grid three">
                 <div className="field">
                   <label htmlFor="naam">Handelsnaam *</label>

@@ -21,6 +21,7 @@ const {
   kopieerFoutenlog,
 } = require("./foutenlog.cjs");
 const { btwTest } = require("./smoke-btw.cjs");
+const { schrijfBriefPdf } = require("./brief-pdf.cjs");
 const {
   vensterMaat,
   standaardStand,
@@ -127,6 +128,49 @@ ipcMain.handle("helder:venster-stand", (gebeurtenis) => {
 ipcMain.handle("helder:venster-terugzetten", (gebeurtenis) =>
   zetVensterTerug(BrowserWindow.fromWebContents(gebeurtenis.sender))
 );
+
+// De laatste aanmaning als PDF opslaan. De pagina levert alleen een voorgestelde bestandsnaam;
+// het pad komt uit de systeemopslag en het schrijven gebeurt hier. Dezelfde printstijl en
+// A4-paginamaat als Print / PDF, maar zonder de printdialoog van het systeem.
+ipcMain.handle("helder:brief-pdf", async (gebeurtenis, naam) => {
+  const venster = BrowserWindow.fromWebContents(gebeurtenis.sender);
+  if (!venster || venster.isDestroyed()) {
+    return { opgeslagen: false, pad: null, fout: "Geen venster om de brief uit te printen." };
+  }
+  const veilig = String(naam || "")
+    .replace(/[\\/:*?"<>|\u0000-\u001f]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim()
+    .slice(0, 120);
+  const voorgesteld = `${veilig || "brief"}.pdf`;
+  let keuze;
+  try {
+    keuze = await dialog.showSaveDialog(venster, {
+      title: "Brief als PDF opslaan",
+      defaultPath: path.join(app.getPath("documents"), voorgesteld),
+      buttonLabel: "Opslaan",
+      filters: [{ name: "PDF", extensions: ["pdf"] }],
+    });
+  } catch (fout) {
+    return {
+      opgeslagen: false,
+      pad: null,
+      fout: fout instanceof Error ? fout.message : String(fout),
+    };
+  }
+  if (keuze.canceled || !keuze.filePath) return { opgeslagen: false, pad: null, fout: "" };
+
+  try {
+    const doel = await schrijfBriefPdf(venster, keuze.filePath);
+    return { opgeslagen: true, pad: doel, fout: "" };
+  } catch (fout) {
+    return {
+      opgeslagen: false,
+      pad: null,
+      fout: fout instanceof Error ? fout.message : String(fout),
+    };
+  }
+});
 
 const consoleFouten = [];
 // Fouten buiten de pagina om — het hoofdproces zelf — bewaren we ook, zodat de btw-test ze kan

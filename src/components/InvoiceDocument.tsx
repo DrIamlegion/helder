@@ -5,8 +5,9 @@
 // Dit bestand is vrije software: je mag het verspreiden en/of aanpassen onder de
 // voorwaarden van de GNU Affero General Public License, versie 3. Zie LICENSE.
 
-import { eur, fmtDate, initials, invoiceState, invoiceTotals, lineTotals } from "../lib";
+import { eur, fmtDate, invoiceState, invoiceTotals, lineTotals } from "../lib";
 import type { Company, Customer, Invoice } from "../types";
+import { CompanyLogo } from "./CompanyLogo";
 import { StateBadge } from "./StateBadge";
 
 interface InvoiceDocumentProps {
@@ -31,7 +32,7 @@ export function InvoiceDocument({ invoice, company, customer }: InvoiceDocumentP
     <div className="paper print-page">
       <div className="paper-head">
         <div className="paper-brand">
-          <span className="mark">{initials(company.naam)}</span>
+          <CompanyLogo company={company} />
           <span>
             <strong>{company.naam}</strong>
             <span>
@@ -166,7 +167,6 @@ export function InvoiceDocument({ invoice, company, customer }: InvoiceDocumentP
         <span>
           {company.naam} · {company.email} · {company.telefoon} · {company.website}
         </span>
-        <span>Pagina 1 / 1</span>
       </div>
     </div>
   );
