@@ -16,20 +16,40 @@ function leesChangelog() {
   return readFileSync(BESTAND, "utf8").replace(/\r\n/g, "\n");
 }
 
-function notitiesVoor(versie) {
+/**
+ * De opmerkingen uit één versiesectie, als één regel per punt. Een punt in CHANGELOG.md mag over
+ * meerdere regels doorlopen; die regels horen bij hetzelfde punt en worden met een spatie aan
+ * elkaar geplakt. Anders zou de update-kaart alleen de eerste regel van elk punt laten zien.
+ */
+function notitiesUitChangelog(tekst, versie) {
   if (!versie) return null;
-  const blokken = leesChangelog()
+  const blokken = String(tekst || "")
+    .replace(/\r\n/g, "\n")
     .split(/^## /m)
     .slice(1);
-  const blok = blokken.find((tekst) => tekst.startsWith(`${versie} `) || tekst.startsWith(`${versie}\n`));
+  const blok = blokken.find((deel) => deel.startsWith(`${versie} `) || deel.startsWith(`${versie}\n`));
   if (!blok) return null;
-  const regels = blok
-    .split("\n")
-    .slice(1)
-    .map((regel) => regel.trim())
-    .filter((regel) => /^[-*]\s+/.test(regel))
-    .map((regel) => regel.replace(/^[-*]\s+/, ""));
-  return regels.length > 0 ? regels.join("\n") : null;
+
+  const punten = [];
+  let huidig = null;
+  for (const ruweRegel of blok.split("\n").slice(1)) {
+    const regel = ruweRegel.trim();
+    if (!regel) continue;
+    const nieuwPunt = regel.match(/^[-*]\s+(.*)$/);
+    if (nieuwPunt) {
+      if (huidig !== null) punten.push(huidig);
+      huidig = nieuwPunt[1].trim();
+    } else if (huidig !== null) {
+      // Een uitloopregel hoort bij het punt hierboven, ook als hij is ingesprongen.
+      huidig = `${huidig} ${regel}`.replace(/\s+/g, " ").trim();
+    }
+  }
+  if (huidig !== null) punten.push(huidig);
+  return punten.length > 0 ? punten.join("\n") : null;
 }
 
-module.exports = { notitiesVoor, leesChangelog };
+function notitiesVoor(versie) {
+  return notitiesUitChangelog(leesChangelog(), versie);
+}
+
+module.exports = { notitiesVoor, notitiesUitChangelog, leesChangelog };

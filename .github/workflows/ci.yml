@@ -34,6 +34,11 @@ jobs:
       - name: Licentieheaders
         run: npm run license:check
 
+      # De opmerkingen in latest.yml komen uit CHANGELOG.md; een afgekapte regel zou de
+      # update-kaart onvolledig maken. Deze test faalt zodra een uitloopregel losraakt.
+      - name: Release-opmerkingen
+        run: npm run test:release-notes
+
       # tsc --noEmit + vite build; hieruit komt de dist/ die hieronder gecontroleerd wordt.
       - name: Types en frontend bouwen
         run: npm run build

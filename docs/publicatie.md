@@ -17,8 +17,8 @@ npm run verify:build             # app.asar hoort bij HEAD (na een build)
 git ls-files -z | xargs -0 du -cb | tail -1    # totale omvang van wat er meegaat
 ```
 
-De controles van de CI-workflow draai je in één keer met `npm run ci`: licentieheaders, build,
-de btw-test in de echte app, de app-map en de hashcontrole.
+De controles van de CI-workflow draai je in één keer met `npm run ci`: licentieheaders,
+release-opmerkingen, build, de btw-test in de echte app, de app-map en de hashcontrole.
 
 Geen geheimen of grote bestanden in de repository:
 
@@ -97,13 +97,15 @@ repository; `package-lock.json` is met ±340 kB het grootste bestand dat meegaat
 
 ## Na de eerste push
 
-- De CI-workflow draait op elke pull request: licentiecontrole, typecheck en build, de
-  **btw-test** (`scripts/test-btw.mjs`, die de app echt start op de Windows-runner),
-  app-map bouwen en de hashcontrole (`scripts/verify-build.mjs`). Draai die btw-test ook lokaal
-  met `npm test` — in CI staat hij vóór de inpakstap, zodat een gebroken btw-regel meteen opvalt.
-- De release-workflow draait op elke `v*`-tag: bouwen, de **btw-test** in de echte app, de
-  app-map bouwen, app-bestanden ondertekenen, de installer bouwen en ondertekenen, `latest.yml`
-  opnieuw genereren, hash- en handtekeningscontrole, en pas dan publiceren. De test staat vóór
-  het inpakken, zodat een gebroken btw-regel geen dure ondertekeningsaanvraag kost.
+- De CI-workflow draait op elke pull request: licentiecontrole, release-opmerkingen,
+  typecheck en build, de **btw-test** (`scripts/test-btw.mjs`, die de app echt start op de
+  Windows-runner), app-map bouwen en de hashcontrole (`scripts/verify-build.mjs`). Draai die
+  btw-test ook lokaal met `npm test` — in CI staat hij vóór de inpakstap, zodat een gebroken
+  btw-regel meteen opvalt.
+- De release-workflow draait op elke `v*`-tag: de release-opmerkingen controleren, bouwen, de
+  **btw-test** in de echte app, de app-map bouwen, app-bestanden ondertekenen, de installer
+  bouwen en ondertekenen, `latest.yml` opnieuw genereren, hash- en handtekeningscontrole, en pas
+  dan publiceren. De tests staan vóór het inpakken, zodat een gebroken btw-regel of afgekapte
+  release-opmerking geen dure ondertekeningsaanvraag kost.
 - Nieuwe versie: hoog `version` in `package.json` op, schrijf de sectie in `CHANGELOG.md`, commit,
   tag en push de tag.

@@ -49,6 +49,9 @@ jobs:
             exit 1
           fi
 
+      - name: Release-opmerkingen
+        run: npm run test:release-notes
+
       - name: Bouwen (frontend + types)
         run: npm run build
 

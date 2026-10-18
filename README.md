@@ -530,16 +530,17 @@ npm run license:check   # faalt als een bronbestand de header mist (handig in CI
 - Bijdragen vallen onder dezelfde AGPL-3.0-licentie; door een pull request in te dienen ga je
   daarmee akkoord.
 - Draai vóór een pull request `npm run ci`: dezelfde controles als de CI-workflow, in dezelfde
-  volgorde — licentieheaders, typecheck en build, de btw-test in de echte app, de app-map en de
-  hashcontrole. Losse stappen kunnen ook: `npm run typecheck`, `npm test` en
-  `npm run license:check`. `npm test` bouwt eerst en loopt daarna de btw-test in de echte app
-  door; dat duurt ongeveer een minuut. De test krijgt een eigen tijdelijke profielmap mee, dus je
+  volgorde — licentieheaders, release-opmerkingen, typecheck en build, de btw-test in de echte
+  app, de app-map en de hashcontrole. Losse stappen kunnen ook: `npm run typecheck`, `npm test`,
+  `npm run test:release-notes` en `npm run license:check`. `npm test` bouwt eerst en loopt daarna
+  de btw-test in de echte app door; dat duurt ongeveer een minuut. De test krijgt een eigen tijdelijke profielmap mee, dus je
   administratie blijft buiten schot en de app mag gewoon openstaan.
-- Elke pull request draait [CI](.github/workflows/ci.yml): licentiecontrole, typecheck en build,
-  de **btw-test** (`node scripts/test-btw.mjs`, op een Windows-runner), het bouwen van
-  de app-map en de hashcontrole. Een PR waarin de btw-regel voor stichting of vereniging breekt
-  wordt daardoor rood, net als een PR waarin de app en `dist/` uit elkaar lopen — bouw dus altijd
-  opnieuw voordat je pusht. De btw-test staat vóór de inpakstap, zodat je die fout meteen ziet.
+- Elke pull request draait [CI](.github/workflows/ci.yml): licentiecontrole,
+  release-opmerkingen, typecheck en build, de **btw-test** (`node scripts/test-btw.mjs`, op een
+  Windows-runner), het bouwen van de app-map en de hashcontrole. Een PR waarin de btw-regel voor
+  stichting of vereniging breekt wordt daardoor rood, net als een PR waarin de app en `dist/` uit
+  elkaar lopen — bouw dus altijd opnieuw voordat je pusht. De btw-test staat vóór de inpakstap,
+  zodat je die fout meteen ziet.
 - Nieuwe versies: hoog de versie op, schrijf de sectie in [CHANGELOG.md](CHANGELOG.md) en tag
   `v<versie>`; de release-workflow draait eerst de btw-test, bouwt en ondertekent daarna, en
   publiceert pas als alles groen is (zie *Ondertekening*). Een tag met een gebroken btw-regel
