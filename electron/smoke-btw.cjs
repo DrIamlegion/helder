@@ -1106,8 +1106,14 @@ async function vensterGeval(venster) {
     })()`);
 
   venster.setSize(1100, 700);
-  await new Promise((klaar) => setTimeout(klaar, 800));
-  const eigen = await vensterKaart();
+  // De kaart volgt de maat met een korte vertraging; op een drukke machine duurt die soms langer
+  // dan de vaste wachttijd. Pollen tot de kaart de nieuwe maat toont, in plaats van gokken.
+  let eigen = null;
+  for (let poging = 0; poging < 60; poging++) {
+    eigen = await vensterKaart();
+    if (eigen && eigen.badge === "Eigen maat" && eigen.tekst.includes("1100 × 700")) break;
+    await new Promise((klaar) => setTimeout(klaar, 100));
+  }
   meld(
     "de kaart laat de eigen maat zien naast de standaardmaat",
     !!eigen &&
@@ -1148,8 +1154,12 @@ async function vensterGeval(venster) {
     geklikt === true && terug,
     `${venster.getBounds().width}×${venster.getBounds().height}, verwacht ${verwachtTerug.breedte}×${verwachtTerug.hoogte}`
   );
-  await new Promise((klaar) => setTimeout(klaar, 500));
-  const na = await vensterKaart();
+  let na = null;
+  for (let poging = 0; poging < 40; poging++) {
+    na = await vensterKaart();
+    if (na && na.badge === "Standaardmaat") break;
+    await new Promise((klaar) => setTimeout(klaar, 100));
+  }
   meld(
     "na het terugzetten zegt de kaart weer standaardmaat",
     !!na &&
@@ -1237,9 +1247,17 @@ async function vensterGeval(venster) {
 
   // De app eindigt met een eigen maat en plek, en gemaximaliseerd. scripts/test-btw.mjs start de
   // app daarna nog een paar keer in dezelfde gegevensmap: eerst moet hij gemaximaliseerd opengaan
-  // met die normale maat bewaard, daarna (na verkleinen) op precies die maat en plek.
-  venster.setPosition(120, 90);
-  venster.setSize(1180, 720);
+  // met die normale maat bewaard, daarna (na verkleinen) op precies die maat en plek. De maat
+  // blijft binnen het werkvlak: op een kleine CI-runner zou de app een te groot venster bij de
+  // volgende start terecht weer inkrimpen, en dan klopt de bewaarde maat niet meer.
+  const eindVlak = screen.getDisplayMatching(venster.getBounds()).workArea;
+  const eindBreedte = Math.min(1180, eindVlak.width);
+  const eindHoogte = Math.min(720, eindVlak.height);
+  venster.setPosition(
+    Math.max(eindVlak.x, Math.min(120, eindVlak.x + eindVlak.width - eindBreedte)),
+    Math.max(eindVlak.y, Math.min(90, eindVlak.y + eindVlak.height - eindHoogte))
+  );
+  venster.setSize(eindBreedte, eindHoogte);
   await new Promise((klaar) => setTimeout(klaar, 700));
   venster.maximize();
   await new Promise((klaar) => setTimeout(klaar, 700));
