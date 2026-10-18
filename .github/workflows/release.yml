@@ -90,6 +90,13 @@ jobs:
       - name: Update-kanaal in de app-map zetten
         run: node scripts/app-update-yml.mjs release/win-unpacked
 
+      # Hashcontrole: de app-map moet exact bij deze commit horen. Dit draait ná het
+      # ondertekenen, zodat ook vaststaat dat de ondertekening de app-bestanden niet heeft
+      # veranderd. De installer wordt hierna met --prepackaged bovenop deze map gebouwd.
+      - name: App-map hoort bij deze commit?
+        shell: bash
+        run: node scripts/verify-build.mjs --tag "$GITHUB_REF_NAME"
+
       - name: Installer bouwen
         run: npx electron-builder --win nsis --x64 --prepackaged release/win-unpacked --publish never
 
@@ -131,6 +138,11 @@ jobs:
         run: |
           node scripts/latest-yml.mjs
           node scripts/latest-yml.mjs --check
+
+      # Laatste controle: de installer van deze versie bestaat en latest.yml hoort erbij.
+      - name: Installer hoort bij deze commit?
+        shell: bash
+        run: node scripts/verify-build.mjs --tag "$GITHUB_REF_NAME" --installer
 
       - name: Handtekening controleren
         run: node scripts/verify-signature.mjs --strict

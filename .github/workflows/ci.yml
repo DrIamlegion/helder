@@ -1,0 +1,52 @@
+# Controleert elke pull request (en elke push naar main) op kwaliteit én op één ding extra:
+# hoort de gebouwde app bij de commit? Daarvoor bouwt deze workflow de app-map zoals de
+# release dat doet en laat hij scripts/verify-build.mjs elk bestand in app.asar hashen tegen
+# de commit onderscheidenlijk de verse build in dist/. Zo wordt een PR rood zodra de app en
+# de bron uit elkaar lopen — bijvoorbeeld doordat dist/ niet opnieuw gebouwd is, of doordat
+# er iets in electron/ meegebundeld wordt dat niet in de commit staat.
+#
+# De release-workflow doet dezelfde controle op een tag, met de tag- en installercontrole
+# erbij. Zie docs/code-signing-policy.md en README → Bijdragen.
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      - name: Licentieheaders
+        run: npm run license:check
+
+      # tsc --noEmit + vite build; hieruit komt de dist/ die hieronder gecontroleerd wordt.
+      - name: Types en frontend bouwen
+        run: npm run build
+
+      - name: App-map bouwen
+        run: npx electron-builder --win --dir --x64
+
+      # In het --dir-pad schrijft electron-builder app-update.yml zelf; de release-flow doet
+      # dit expliciet omdat hij met --prepackaged werkt. Zo is de app-map identiek opgebouwd.
+      - name: Update-kanaal in de app-map zetten
+        run: node scripts/app-update-yml.mjs release/win-unpacked
+
+      # De installer wordt hier bewust niet gebouwd: dat kost een minuut of wat extra en de
+      # inhoud is dezelfde app-map. De release-workflow bouwt hem en controleert dan ook
+      # latest.yml; hier telt alleen of de app bij de commit hoort.
+      - name: App hoort bij deze commit?
+        run: node scripts/verify-build.mjs

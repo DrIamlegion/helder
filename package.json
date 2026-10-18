@@ -18,6 +18,7 @@
     "sign:check": "node scripts/verify-signature.mjs",
     "latest-yml": "node scripts/latest-yml.mjs",
     "latest-yml:check": "node scripts/latest-yml.mjs --check",
+    "verify:build": "node scripts/verify-build.mjs",
     "license:add": "node scripts/license-headers.mjs",
     "license:check": "node scripts/license-headers.mjs --check"
   },

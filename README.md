@@ -254,6 +254,10 @@ Wat er in deze repo al voor klaarstaat:
   bouwt de workflow ongetekend door, zodat de pijplijn testbaar blijft.
 - [scripts/latest-yml.mjs](scripts/latest-yml.mjs) — maakt `latest.yml` opnieuw ná het
   ondertekenen (de sha512 verandert dan) en controleert met `--check` of hij klopt.
+- [scripts/verify-build.mjs](scripts/verify-build.mjs) — hashcontrole: elk bestand in de
+  gebouwde `app.asar` dat uit de repository komt (`electron/**`) en elk frontendbestand moet
+  gelijk zijn aan HEAD respectievelijk de verse build in `dist/`, plus `resources/LICENSE`, de
+  versie en de tag. De workflow draait hem ná het ondertekenen en nog eens ná `latest.yml`.
 
 Wat alleen jij kunt doen: de repository **openbaar** maken op GitHub, een SignPath-account
 aanvragen met dit project en beleid, de twee secrets (`SIGNPATH_API_TOKEN`,
@@ -435,8 +439,14 @@ npm run license:check   # faalt als een bronbestand de header mist (handig in CI
 - Bijdragen vallen onder dezelfde AGPL-3.0-licentie; door een pull request in te dienen ga je
   daarmee akkoord.
 - Draai vóór een pull request `npm run typecheck`, `npm run build` en `npm run license:check`.
+- Elke pull request draait [CI](.github/workflows/ci.yml): licentiecontrole, typecheck en build,
+  de app-map bouwen en de hashcontrole. Een PR waarin de app en `dist/` uit elkaar lopen wordt
+  daar dus rood — bouw dus altijd opnieuw voordat je pusht.
 - Nieuwe versies: hoog de versie op, schrijf de sectie in [CHANGELOG.md](CHANGELOG.md) en tag
   `v<versie>`; de release-workflow doet de rest (zie *Ondertekening*).
+- Controleer na een build dat het pakket echt bij de commit hoort:
+  `npm run verify:build -- --tag v<versie>` (of `--app-map` om een bestaande installatie te
+  controleren). Zonder `--tag` slaat hij de tag- en installercontrole over.
 - Het ondertekeningsbeleid staat in [docs/code-signing-policy.md](docs/code-signing-policy.md).
 
 ## Bewust nog niet gebouwd
