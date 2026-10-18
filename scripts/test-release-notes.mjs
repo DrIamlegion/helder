@@ -13,9 +13,14 @@
 // sectie controleert die op het punt staat uit te komen.
 //
 //   node scripts/test-release-notes.mjs
+//
+// De app leest CHANGELOG.md met src/changelog-parse.ts. Die functie wordt hier ook gedraaid,
+// zodat de versiegeschiedenis in de app en de opmerkingen in latest.yml niet uit elkaar kunnen
+// lopen. Node leest zo'n TypeScript-bestand sinds 22.18 zonder omweg.
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import releaseNotes from "./release-notes.cjs";
+import { leesVersies } from "../src/changelog-parse.ts";
 
 const { leesChangelog, notitiesUitChangelog, notitiesVoor } = releaseNotes;
 
@@ -45,24 +50,25 @@ assert.equal(notitiesUitChangelog(voorbeeld, ""), null);
 assert.equal(notitiesUitChangelog(voorbeeld, "0.9.9"), null);
 assert.equal(notitiesVoor("0.9.9"), null);
 
-/** De punten uit een sectie, met de uitloopregels aan het punt hierboven geplakt. */
-function puntenUitSectie(sectie) {
-  const punten = [];
-  let huidig = null;
-  for (const ruweRegel of sectie.split("\n").slice(1)) {
-    const regel = ruweRegel.trim();
-    if (!regel) continue;
-    const nieuwPunt = regel.match(/^[-*]\s+(.*)$/);
-    if (nieuwPunt) {
-      if (huidig !== null) punten.push(huidig);
-      huidig = nieuwPunt[1].trim();
-    } else if (huidig !== null) {
-      huidig = `${huidig} ${regel}`.replace(/\s+/g, " ").trim();
-    }
-  }
-  if (huidig !== null) punten.push(huidig);
-  return punten;
-}
+// De app en de release-opmerkingen gebruiken dezelfde regel: elk punt is één regel, met de
+// uitloopregels eraan geplakt. Wijkt een van beide af, dan faalt de test hieronder.
+const appVersies = leesVersies(voorbeeld);
+assert.deepEqual(
+  appVersies.map((regel) => regel.punten),
+  [
+    [
+      "Eerste punt met een langere uitleg die op de volgende regel doorloopt.",
+      "Tweede punt met **nadruk** en nog een uitloopregel.",
+    ],
+    ["Oud punt"],
+  ],
+  "de versiegeschiedenis in de app plakt uitloopregels aan het punt"
+);
+assert.deepEqual(
+  appVersies.map((regel) => `${regel.versie} · ${regel.datum}`),
+  ["0.2.0 · 1 januari 2027", "0.1.0 · 1 januari 2026"],
+  "versie en datum komen uit de kop"
+);
 
 // De echte changelog: elk punt is één regel, en juist de lange punten zijn compleet.
 const pkg = JSON.parse(readFileSync(new URL("../package.json", import.meta.url), "utf8"));
@@ -78,8 +84,15 @@ assert.ok(sectie, `de sectie van ${versie} staat in CHANGELOG.md`);
 const notities = notitiesVoor(versie);
 assert.ok(notities, `${versie} heeft release-opmerkingen`);
 const regels = notities.split("\n");
-const verwacht = puntenUitSectie(sectie);
-assert.deepEqual(regels, verwacht, "elk changelog-punt staat volledig op één regel");
+// Dezelfde sectie door de app-parser: de versiegeschiedenis moet dezelfde punten tonen als de
+// update-kaart, anders leest de gebruiker twee verschillende versies van hetzelfde verhaal.
+const appSectie = leesVersies(leesChangelog()).find((regel) => regel.versie === versie);
+assert.ok(appSectie, `de app vindt de sectie van ${versie}`);
+assert.deepEqual(
+  appSectie.punten,
+  regels,
+  "de versiegeschiedenis in de app toont dezelfde volledige punten als latest.yml"
+);
 
 // Een uitloopregel mag nooit als zelfstandig punt in de opmerkingen terechtkomen.
 const vervolgRegels = sectie
@@ -91,5 +104,15 @@ assert.ok(
   !regels.some((regel) => vervolgRegels.includes(regel)),
   "een uitloopregel staat niet als los punt in de opmerkingen"
 );
+
+// Ook de oudere versies in de geschiedenis: de app toont ze allemaal, en juist de lange
+// punten uit 0.1.7 mogen daar niet afgekapt staan.
+for (const appRegel of leesVersies(leesChangelog())) {
+  assert.deepEqual(
+    appRegel.punten,
+    (notitiesUitChangelog(leesChangelog(), appRegel.versie) || "").split("\n"),
+    `de app toont ${appRegel.versie} precies zoals latest.yml hem zou melden`
+  );
+}
 
 console.log(`Release-opmerkingen: ${regels.length} volledige punten voor ${versie}.`);

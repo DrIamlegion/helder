@@ -4,6 +4,14 @@ Wat er per versie verandert, nieuwste bovenaan. Dit bestand is de bron: de bouw 
 notities van de huidige versie in `latest.yml`, en de app toont ze in de update-kaart
 voordat je een update installeert.
 
+## 0.1.8 — 18 oktober 2026
+
+- De update-kaart en de versiegeschiedenis tonen elk punt nu volledig. Liep een punt over
+  twee of drie regels, dan stopte de app na de eerste regel midden in de zin; de rest van
+  het punt blijft nu staan.
+- De notities die met een update meekomen worden bij het bouwen uit dit bestand gehaald, en
+  een controle vóór het inpakken voorkomt dat er weer een half punt in `latest.yml` belandt.
+
 ## 0.1.7 — 18 oktober 2026
 
 - Een eigen logo op je facturen, offertes en aanmaningsbrieven: kies het in Instellingen →

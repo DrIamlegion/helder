@@ -7,29 +7,15 @@
 
 // De versiegeschiedenis, rechtstreeks uit CHANGELOG.md. Zo staat er één lijst in de repo:
 // de bouw zet de notities van de huidige versie in latest.yml (voor de update-kaart) en de
-// app leest hetzelfde bestand voor het overzicht van alle versies.
+// app leest hetzelfde bestand voor het overzicht van alle versies. Het leeswerk zelf staat
+// in changelog-parse.ts, zodat de releasetest precies dezelfde regel kan controleren.
 import ruwBestand from "../CHANGELOG.md?raw";
+import { leesVersies, type ChangelogRegel } from "./changelog-parse";
 
-export interface ChangelogRegel {
-  versie: string;
-  datum: string;
-  punten: string[];
-}
+export type { ChangelogRegel };
 
 export function leesChangelog(tekst: string): ChangelogRegel[] {
-  const blokken = tekst.replace(/\r\n/g, "\n").split(/^## /m).slice(1);
-  return blokken.map((blok) => {
-    const [kop, ...rest] = blok.split("\n");
-    const [versie, ...datumDelen] = kop.split("—");
-    return {
-      versie: versie.trim(),
-      datum: datumDelen.join("—").trim(),
-      punten: rest
-        .map((regel) => regel.trim())
-        .filter((regel) => /^[-*]\s+/.test(regel))
-        .map((regel) => regel.replace(/^[-*]\s+/, "")),
-    };
-  });
+  return leesVersies(tekst);
 }
 
 export const CHANGELOG: ChangelogRegel[] = leesChangelog(ruwBestand);
