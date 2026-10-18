@@ -1800,6 +1800,7 @@ async function btwTest(venster, consoleFouten = [], hoofdprocesFouten = []) {
     // ontstaan: die hoort in het logboek te belanden en niet als fout van de app te gelden.
     gevallen.push(await foutenlogGeval(venster));
     gevallen.push(await vensterGeval(venster));
+    gevallen.push(await backupGeval(venster));
 
     for (const deel of gevallen) toon(deel.naam, deel.uitslagen);
 
@@ -1836,6 +1837,50 @@ async function btwTest(venster, consoleFouten = [], hoofdprocesFouten = []) {
     console.error(bericht);
     app.exit(1);
   }
+}
+
+/**
+ * De automatische back-up, in de echte app: de pagina stuurt de administratie via de brug naar het
+ * hoofdproces, dat hem in de gegevensmap schrijft. Deze test draait met een eigen gegevensmap
+ * (scripts/test-btw.mjs geeft --user-data-dir mee), dus de administratie van de gebruiker blijft
+ * buiten schot.
+ */
+async function backupGeval(venster) {
+  return venster.webContents.executeJavaScript(`new Promise(async (klaar) => {
+    const uitslagen = [];
+    const meld = (naam, ok, detail) =>
+      uitslagen.push({ naam: naam, ok: !!ok, detail: detail === undefined ? "" : String(detail) });
+    const brug = window.helder;
+
+    meld("de pagina kan een back-up laten schrijven", !!brug && typeof brug.schrijfBackup === "function");
+
+    // De app schrijft meteen na het starten een kopie; die moet er dus al staan voordat deze
+    // controle iets doet.
+    const stand = await brug.backupStatus();
+    meld(
+      "de app heeft na het starten al een kopie geschreven",
+      !!(stand && stand.laatste),
+      stand && stand.laatste
+        ? stand.laatste.naam + " · " + stand.laatste.bytes + " bytes"
+        : "geen back-up gevonden"
+    );
+
+    const uitslag = await brug.schrijfBackup(JSON.stringify({ test: true }));
+    meld(
+      "het antwoord wijst naar een bestand in de back-upmap",
+      !!(uitslag && typeof uitslag.pad === "string" && uitslag.pad.includes("back-ups")),
+      uitslag ? uitslag.pad : "geen antwoord"
+    );
+
+    location.hash = "#/instellingen";
+    await new Promise((gedaan) => setTimeout(gedaan, 600));
+    meld(
+      "Instellingen laat zien wanneer de laatste back-up is gemaakt",
+      /Automatische back-up: (laatst|nog geen)/.test(document.body.innerText),
+      (document.body.innerText.match(/Automatische back-up[^\\n]*/) || [""])[0]
+    );
+    klaar({ naam: "Automatische back-up", uitslagen: uitslagen });
+  })`);
 }
 
 module.exports = { btwTest, GEVALLEN, BTW_NUMMER };

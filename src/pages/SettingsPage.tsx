@@ -15,8 +15,8 @@ import { normalizeState } from "../data";
 import { useTitle } from "../hooks";
 import { AUTO_DREMPELS, HERINNER_RUSTDAGEN } from "../reminders";
 import { useInstall, useOfflineGereed } from "../pwa";
-import { useFoutenlog, useUpdates, useVensterstand } from "../desktop";
-import { download, fmtDate, initials, todayISO } from "../lib";
+import { useBackup, useFoutenlog, useUpdates, useVensterstand } from "../desktop";
+import { download, fmtDate, fmtDateTime, initials, todayISO } from "../lib";
 import { maakLogoKlein } from "../logo";
 import { rechtsvormOpties, zonderBtwNummer } from "../rechtsvormen";
 import { useAppStore } from "../store";
@@ -37,6 +37,7 @@ export function SettingsPage() {
     () => !zonderBtwNummer(state.bedrijf.rechtsvorm) || Boolean(state.bedrijf.btw)
   );
   const toonBtw = !zonderBtwNummer(form.rechtsvorm) || btwPlichtig;
+  const backupStand = useBackup();
   const [confirmingReset, setConfirmingReset] = useState(false);
   const [geschiedenisOpen, setGeschiedenisOpen] = useState(false);
   const [importError, setImportError] = useState("");
@@ -599,8 +600,9 @@ export function SettingsPage() {
             <span className="badge badge-green">Lokaal opgeslagen</span>
           </div>
           <p className="small muted mt-8">
-            Alles staat in deze browser (localStorage). Er gaat niets naar een server. Maak
-            regelmatig een back-up voordat je browsergegevens wist.
+            Alles staat in deze browser (localStorage). Er gaat niets naar een server. In de
+            desktop-app maakt Helder daarnaast elke dag een kopie in je gegevensmap, zodat je
+            administratie niet aan één opslag hangt.
           </p>
           <div className="stats-row mt-16">
             {stats.map((stat) => (
@@ -633,6 +635,28 @@ export function SettingsPage() {
               <Icon name="refresh" size={14} /> Administratie wissen
             </button>
           </div>
+          {backupStand.beschikbaar ? (
+            <div className="backup-stand mt-16">
+              <div className="row-between" style={{ gap: 12, flexWrap: "wrap" }}>
+                <span className="small muted">
+                  <Icon name="clock" size={14} />{" "}
+                  {backupStand.stand?.laatste
+                    ? `Automatische back-up: laatst ${fmtDateTime(backupStand.stand.laatste.geschrevenOp)} · ${backupStand.stand.aantal} bewaard`
+                    : "Automatische back-up: nog geen kopie geschreven"}
+                </span>
+                <button
+                  className="btn btn-sm"
+                  type="button"
+                  onClick={async () => {
+                    const fout = await backupStand.openMap();
+                    if (fout) toast(fout);
+                  }}
+                >
+                  <Icon name="folder" size={14} /> Back-ups openen
+                </button>
+              </div>
+            </div>
+          ) : null}
           {importError ? (
             <div className="form-error mt-12" role="alert">
               <div>

@@ -58,8 +58,8 @@ Open daarna <http://localhost:5173/>.
   indienstatus, onderbouwing en CSV-export.
 - **Instellingen** — bedrijfsgegevens met één eigen logo (ook in de kop van de publieke
   betaalregeling), IBAN, betaaltermijn, automatisch klaarzetten van
-  aanmaningen aan/uit, JSON-back-up downloaden én terugzetten (met validatie) en de hele
-  administratie wissen. Kies je als rechtsvorm *stichting* of *vereniging*, dan blijft het
+  aanmaningen aan/uit, JSON-back-up downloaden én terugzetten (met validatie), de stand van de
+  **automatische back-ups** met één knop naar de map en de hele administratie wissen. Kies je als rechtsvorm *stichting* of *vereniging*, dan blijft het
   btw-nummer buiten beeld (die organisaties zijn meestal niet btw-plichtig); met één vinkje
   haal je het veld terug als je wél btw-plichtig bent.
 
@@ -258,6 +258,15 @@ Wil je Helder als gewoon Windows-programma met een installer, dan bouw je die ze
   een menu met *Map met gegevens openen*, *Logboek met fouten*, zoomen, *Venstermaat terugzetten*
   (Ctrl+Shift+0) en *Ontwikkelaarstools*.
 - Zonder installer draaien kan ook: `npm run desktop`.
+- **Automatische back-ups.** De desktop-app schrijft de administratie meteen bij het starten en
+  daarna elk uur (hooguit) als leesbare JSON naar `%APPDATA%\Helder\back-ups`, met één bestand per
+  dag (`helder-backup-2026-10-18.json`). De nieuwste veertien dagen blijven staan, plus de
+  nieuwste van elke maand — samen ruim een jaar historie. Alleen bestanden met die naam worden
+  opgeruimd; je eigen kopieën in die map blijven dus staan. Instellingen → *Je gegevens* toont
+  wanneer er voor het laatst een kopie is geschreven en opent de map met één knop. De logica staat
+  in [electron/back-up.cjs](electron/back-up.cjs), de bedrading in [electron/main.cjs](electron/main.cjs)
+  en [src/desktop.ts](src/desktop.ts); `npm run test:backup` test schrijven, overslaan en opruimen,
+  en de btw-test controleert in de echte app dat de kaart en de map kloppen.
 - Kom je uit de browser- of PWA-versie? Download daar een back-up (Instellingen → *Back-up
   downloaden*) en zet die in de desktop-app terug via *Back-up terugzetten*; het zijn twee aparte
   opslagplaatsen.

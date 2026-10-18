@@ -8,7 +8,8 @@
 // De brug naar de desktop-app. Alleen de geïnstalleerde app heeft een hoofdproces dat
 // updates kan ophalen en installeren; in de browser bestaat deze brug niet en laten we
 // de update-kaart gewoon weg.
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import type { AppState } from "./types";
 
 export type UpdateToestand =
   | "onbekend"
@@ -69,6 +70,34 @@ export interface PdfOpslag {
   fout: string;
 }
 
+/** Wat er in de back-upmap staat; zie electron/back-up.cjs. */
+export interface BackupStand {
+  map: string;
+  aantal: number;
+  laatste: {
+    naam: string;
+    pad: string;
+    datum: string;
+    bytes: number;
+    geschrevenOp: string;
+  } | null;
+}
+
+/** De uitkomst van één automatische back-up. */
+export interface BackupUitslag {
+  geschreven: boolean;
+  overgeslagen: boolean;
+  pad: string;
+  opgeruimd: string[];
+}
+
+/** Het resultaat van "laat de back-upmap zien". */
+export interface BackupMapOpenen {
+  geopend: boolean;
+  pad: string;
+  fout: string;
+}
+
 /** De maat van het venster, en de standaardmaat die bij het huidige scherm hoort. */
 export interface Vensterstand {
   breedte: number;
@@ -92,6 +121,10 @@ interface HelderBrug {
   vensterTerugzetten: () => Promise<Vensterstand | null>;
   /** De huidige brief als vaste A4-PDF opslaan; de systeem-printdialoog komt er niet aan te pas. */
   opslaanBriefPdf: (naam: string) => Promise<PdfOpslag>;
+  /** De administratie als JSON naar de back-upmap schrijven; het hoofdproces beslist of dat nu nodig is. */
+  schrijfBackup: (inhoud: string) => Promise<BackupUitslag>;
+  backupStatus: () => Promise<BackupStand>;
+  openBackUpMap: () => Promise<BackupMapOpenen>;
   onTip: (callback: (melding: TipMelding | null) => void) => () => void;
 }
 
@@ -271,4 +304,77 @@ export function useVensterstand() {
   }
 
   return { beschikbaar: !!brug, stand, terugzetten };
+}
+
+/**
+ * De stand van de automatische back-ups, voor Instellingen: wanneer er voor het laatst een kopie
+ * is geschreven, hoeveel er bewaard worden en waar ze staan. De kaart ververst zichzelf elke
+ * minuut, zodat een back-up die tijdens het werken ontstaat meteen zichtbaar is.
+ */
+export function useBackup() {
+  const [brug] = useState(desktopBrug);
+  const [stand, setStand] = useState<BackupStand | null>(null);
+
+  useEffect(() => {
+    if (!brug) return;
+    let actief = true;
+    const lees = () => {
+      brug
+        .backupStatus()
+        .then((nieuw) => {
+          if (actief) setStand(nieuw);
+        })
+        .catch(() => {
+          // Geen antwoord: dan blijft de kaart bij de vorige stand.
+        });
+    };
+    lees();
+    const timer = window.setInterval(lees, 60_000);
+    return () => {
+      actief = false;
+      window.clearInterval(timer);
+    };
+  }, [brug]);
+
+  /** Opent de back-upmap in de bestandsbeheerder; leeg als het gelukt is, anders de melding. */
+  async function openMap(): Promise<string> {
+    if (!brug) return "";
+    try {
+      const uitslag = await brug.openBackUpMap();
+      return uitslag.geopend ? "" : uitslag.fout || "De map kon niet worden geopend.";
+    } catch {
+      return "Het hoofdproces gaf geen antwoord.";
+    }
+  }
+
+  return { beschikbaar: !!brug, stand, openMap };
+}
+
+/**
+ * Houdt de automatische back-up bij: meteen bij het starten en daarna elke tien minuten. Hoe vaak
+ * er echt geschreven wordt bepaalt het hoofdproces: hooguit één keer per uur, en nooit als de
+ * inhoud gelijk is. Mislukt een poging, dan merkt de gebruiker daar niets van — de handmatige
+ * back-up blijft gewoon bestaan.
+ */
+export function useAutomatischeBackup(state: AppState) {
+  const [brug] = useState(desktopBrug);
+  const laatste = useRef(state);
+  laatste.current = state;
+
+  useEffect(() => {
+    if (!brug) return;
+    let actief = true;
+    const schrijf = () => {
+      if (!actief) return;
+      void brug.schrijfBackup(JSON.stringify(laatste.current)).catch(() => {
+        // Vangnet, geen functionaliteit: stil doorgaan.
+      });
+    };
+    schrijf();
+    const timer = window.setInterval(schrijf, 10 * 60 * 1000);
+    return () => {
+      actief = false;
+      window.clearInterval(timer);
+    };
+  }, [brug]);
 }

@@ -57,6 +57,9 @@ jobs:
       - name: Updatekanaal
         run: npm run test:update-kanaal
 
+      - name: Automatische back-up
+        run: npm run test:backup
+
       - name: Bouwen (frontend + types)
         run: npm run build
 

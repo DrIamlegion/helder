@@ -22,6 +22,7 @@ const {
 } = require("./foutenlog.cjs");
 const { btwTest } = require("./smoke-btw.cjs");
 const { schrijfBriefPdf } = require("./brief-pdf.cjs");
+const { schrijfBackup, backupStatus, openBackUpMap } = require("./back-up.cjs");
 const {
   vensterMaat,
   standaardStand,
@@ -48,6 +49,13 @@ installeerFoutenlog();
 // geen toegang tot het besturingssysteem: alleen deze twee handelingen, met vaste vorm.
 ipcMain.handle("helder:fouten-lees", () => leesFoutenlog());
 ipcMain.handle("helder:fouten-kopieer", () => kopieerFoutenlog());
+
+// Automatische back-ups: de pagina stuurt de administratie als JSON, het hoofdproces schrijft
+// hem naar de gegevensmap en ruimt oude kopieën op; zie electron/back-up.cjs. De pagina krijgt
+// daarmee geen bestandssysteem in handen: alleen "bewaar deze tekst" en "laat de map zien".
+ipcMain.handle("helder:backup-schrijf", (_gebeurtenis, inhoud) => schrijfBackup(inhoud));
+ipcMain.handle("helder:backup-status", () => backupStatus());
+ipcMain.handle("helder:backup-open", () => openBackUpMap());
 
 // Vóór het tipsysteem stond de enige tip in venster-tip.json. Lees die markering één keer over
 // naar de tips van de app en ruim het oude bestand op, zodat een bestaande installatie de tip

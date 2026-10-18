@@ -44,6 +44,9 @@ jobs:
       - name: Updatekanaal
         run: npm run test:update-kanaal
 
+      - name: Automatische back-up
+        run: npm run test:backup
+
       # tsc --noEmit + vite build; hieruit komt de dist/ die hieronder gecontroleerd wordt.
       - name: Types en frontend bouwen
         run: npm run build

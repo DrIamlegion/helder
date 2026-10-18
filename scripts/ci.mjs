@@ -45,6 +45,11 @@ const stappen = [
     argumenten: ["scripts/test-update-kanaal.mjs"],
   },
   {
+    naam: "Automatische back-up",
+    commando: process.execPath,
+    argumenten: ["scripts/test-backup.mjs"],
+  },
+  {
     naam: "Types en frontend bouwen",
     commando: process.execPath,
     argumenten: [npmCli, "run", "build"],

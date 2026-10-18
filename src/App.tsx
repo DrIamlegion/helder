@@ -15,6 +15,7 @@ import { useAppStore } from "./store";
 import { useToast } from "./components/Toast";
 import { useOnline } from "./pwa";
 import { useTips } from "./tips";
+import { useAutomatischeBackup } from "./desktop";
 import { BankPage } from "./pages/BankPage";
 import { DashboardPage } from "./pages/DashboardPage";
 import { InvoicesPage } from "./pages/InvoicesPage";
@@ -91,6 +92,10 @@ function AppShell() {
   const [paletteOpen, setPaletteOpen] = useState(false);
   const generatedRecurring = useRef(false);
   const stagedReminders = useRef(false);
+
+  // De desktop-app bewaart elke dag een kopie van de administratie in de gegevensmap; in de
+  // browser bestaat die brug niet en gebeurt hier niets.
+  useAutomatischeBackup(state);
 
   const openInvoices = state.facturen.filter((invoice) =>
     ["verzonden", "vervallen"].includes(invoiceState(invoice))
