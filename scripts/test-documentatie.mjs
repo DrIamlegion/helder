@@ -130,6 +130,8 @@ const teControleren = [
   "docs/download.md",
   "docs/privacy.md",
   "docs/signpath-aanvraag.md",
+  "docs/signpath-aanvraag-log.md",
+  "docs/signpath-inrichting.md",
   "docs/code-signing-policy.md",
   "docs/publicatie.md",
 ];

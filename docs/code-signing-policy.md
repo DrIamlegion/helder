@@ -73,12 +73,14 @@ verandert (`node scripts/latest-yml.mjs`). De blockmap van electron-builder hoor
 `blockMapSize`), dus er zijn geen differentiële updates en een verouderde blockmap zou alleen
 verwarren.
 
-De artifact configurations maak je in SignPath het makkelijkst door een **proefartefact te
-uploaden**; SignPath genereert dan de XML. Haal daarna de ondertekeningsopdracht weg bij alle
-bestanden die niet van ons zijn (de DLL's en hulpprogramma's van Electron) en laat alleen
-`Helder.exe` respectievelijk `Helder-Setup-*.exe` ondertekenen. Gebruik `Helder-Setup-*.exe`
-liever dan een versienummer in het pad: anders moet de configuratie bij elke release mee
-veranderen.
+De twee artifact configurations staan als XML in de repository:
+[helder-app](signpath/artifact-configurations/helder-app.xml) ondertekent `Helder.exe`,
+[helder-installer](signpath/artifact-configurations/helder-installer.xml) ondertekent
+`Helder-Setup-*.exe`. In beide staat één ondertekeningsopdracht, op ons eigen bestand, en leggen
+ze de metadata vast die de Foundation eist (productnaam gelijk aan de projectnaam, productversie
+in elke build dezelfde). Het pad van de installer is een patroon, geen versienummer, zodat de
+configuratie niet bij elke release mee hoeft te veranderen. Hoe je ze in het portaal zet, staat in
+[signpath-inrichting.md](signpath-inrichting.md).
 
 ## Hoe een build wordt geverifieerd
 

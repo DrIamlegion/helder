@@ -57,6 +57,10 @@ jobs:
         run: |
           versie=$(node -p "require('./package.json').version")
           echo "package.json: $versie, tag: ${GITHUB_REF_NAME}"
+          # De artifact configurations eisen de productversie als metadata-restrictie. Die waarde
+          # komt hier vandaan en gaat als parameter mee met beide ondertekeningsaanvragen, zodat
+          # de configuratie zelf niet per release aangepast hoeft te worden.
+          echo "VERSIE=$versie" >> "$GITHUB_ENV"
           if [[ "${GITHUB_REF_NAME}" == v* && "${GITHUB_REF_NAME}" != "v$versie" ]]; then
             echo "Tag ${GITHUB_REF_NAME} hoort niet bij versie $versie in package.json." >&2
             exit 1
@@ -115,6 +119,8 @@ jobs:
           project-slug: helder
           signing-policy-slug: release-signing
           artifact-configuration-slug: helder-app
+          parameters: |
+            version: "${{ env.VERSIE }}"
           github-artifact-id: ${{ steps.upload-app.outputs.artifact-id }}
           wait-for-completion: true
           # Een app-map van honderden megabytes kan langer duren dan de standaard 10 minuten.
@@ -174,6 +180,8 @@ jobs:
           project-slug: helder
           signing-policy-slug: release-signing
           artifact-configuration-slug: helder-installer
+          parameters: |
+            version: "${{ env.VERSIE }}"
           github-artifact-id: ${{ steps.upload-installer.outputs.artifact-id }}
           wait-for-completion: true
           wait-for-completion-timeout-in-seconds: 1800

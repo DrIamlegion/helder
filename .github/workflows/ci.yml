@@ -58,6 +58,19 @@ jobs:
       - name: Ondertekeningspijplijn (SignPath)
         run: npm run test:signpath
 
+      # De twee artifact configurations zijn zonder SignPath-account niet te draaien, dus
+      # controleert deze test hun opbouw: één <zip-file> onder de root, precies één ondertekend
+      # bestand (ons eigen), de metadata-restricties die de Foundation eist, en de versieparameter
+      # die de workflow meegeeft. Een fout hier merk je anders pas bij de eerste echte release.
+      - name: Configuraties (SignPath)
+        run: npm run test:signpath-configuraties
+
+      # Het telwerk achter de cijfers die bij een SignPath-aanvraag horen: concept-releases,
+      # bots en eigen issues mogen niet als reputatie meetellen. Draait op vaste antwoorden,
+      # dus zonder netwerk; de meting zelf (npm run signalen) hoort niet in de CI.
+      - name: Signalen (SignPath)
+        run: npm run test:signalen
+
       - name: Automatische back-up
         run: npm run test:backup
 

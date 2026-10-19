@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Artifact configuration voor de app-map van Helder — slug `helder-app` in SignPath.
+
+  De release-workflow uploadt de inhoud van release/win-unpacked onverpakt met
+  actions/upload-artifact. Die actie maakt zelf de zip, dus het root-element is <zip-file> en
+  Helder.exe staat bovenaan in dat archief, niet in een map. Zelf een zip maken zou een zip in
+  een zip opleveren; dan past deze configuratie niet meer op het artefact.
+
+  Ondertekend wordt alleen Helder.exe: dat is het enige programma dat wij zelf bouwen. De
+  Electron-bibliotheken en DLL's eromheen komen van upstream en mogen volgens de voorwaarden van
+  de Foundation niet met dit certificaat ondertekend worden. Ze mogen wel ongetekend mee in het
+  pakket, en dat is precies wat er gebeurt: er staat hier één <authenticode-sign />.
+
+  De metadata-restricties komen uit de voorwaarden van de Foundation (signpath.org/terms.html,
+  "SignPath configuration requirements"): de productnaam is de projectnaam en de productversie is
+  in elke build dezelfde. Ze zijn geen versiering — SignPath weigert het artefact als de waarden
+  niet kloppen, en dan stopt de release in plaats van stilletjes iets anders te ondertekenen.
+
+  De waarden zijn afgelezen van een echte build (release/win-unpacked/Helder.exe van 0.1.10):
+  ProductName `Helder`, CompanyName `Helder`, ProductVersion `0.1.10.0`, FileVersion `0.1.10`.
+  Electron-builder zet in de app-exe een vierdelige productversie en een driedelige fileversie;
+  vandaar ${version}.0 hier, en ${version} in helder-installer.xml. De release-workflow vult
+  `version` met de versie uit package.json.
+-->
+<artifact-configuration xmlns="http://signpath.io/artifact-configuration/v1">
+  <parameters>
+    <parameter name="version" required="true" />
+  </parameters>
+  <zip-file>
+    <pe-file
+      path="Helder.exe"
+      product-name="Helder"
+      company-name="Helder"
+      product-version="${version}.0"
+      file-version="${version}"
+    >
+      <authenticode-sign />
+    </pe-file>
+  </zip-file>
+</artifact-configuration>

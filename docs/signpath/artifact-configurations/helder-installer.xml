@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Artifact configuration voor de NSIS-installer van Helder — slug `helder-installer`.
+
+  De release-workflow uploadt release/Helder-Setup-<versie>.exe onverpakt met
+  actions/upload-artifact, en die actie maakt zelf de zip. Het root-element is dus <zip-file>,
+  met daarin precies één bestand: de installer.
+
+  Het pad is een patroon (`*`) in plaats van een versienummer. Zo hoeft deze configuratie niet
+  mee te veranderen bij elke release; het standaard maximum van één treffer past bij een upload
+  van één installer. Electron-builder bouwt de naam als `Helder-Setup-${version}.exe`
+  (artifactName in electron-builder.cjs), en de test controleert dat dit patroon daarop past.
+
+  Alleen de installer zelf wordt ondertekend, niet de bestanden die erin zitten: die zijn al
+  ondertekend in stap 1 (helder-app), en de installer wordt met de prepackaged-optie van
+  electron-builder bovenop die ondertekende app-map gebouwd. Zo bevat de installer geen
+  ongetekende kopie van Helder.exe.
+
+  Metadata-restricties, zoals de Foundation ze eist: productnaam is de projectnaam, productversie
+  is in elke build dezelfde. Voor de installer zijn dat driedelige waarden — van een echte build
+  (Helder-Setup-0.1.8.exe): ProductName `Helder`, CompanyName `Helder`, ProductVersion `0.1.8`,
+  FileVersion `0.1.8`. De workflow vult `version` met de versie uit package.json.
+-->
+<artifact-configuration xmlns="http://signpath.io/artifact-configuration/v1">
+  <parameters>
+    <parameter name="version" required="true" />
+  </parameters>
+  <zip-file>
+    <pe-file
+      path="Helder-Setup-*.exe"
+      product-name="Helder"
+      company-name="Helder"
+      product-version="${version}"
+      file-version="${version}"
+    >
+      <authenticode-sign />
+    </pe-file>
+  </zip-file>
+</artifact-configuration>

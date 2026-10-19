@@ -92,8 +92,9 @@ repository; `package-lock.json` is met ±340 kB het grootste bestand dat meegaat
    Windows toont dan SmartScreen-waarschuwingen. Zie README → *Ondertekening*.
 
 4. **SignPath Foundation** aanvragen met de URL van de openbare repository
-   ([docs/signpath-aanvraag.md](signpath-aanvraag.md) heeft de antwoorden per formulierveld), en
-   daarna `SIGNPATH_API_TOKEN` en `SIGNPATH_ORGANIZATION_ID` als Actions-secrets zetten. Elke
+   ([docs/signpath-aanvraag.md](signpath-aanvraag.md) heeft de antwoorden per formulierveld;
+   [signpath-aanvraag-log.md](signpath-aanvraag-log.md) legt per poging vast wat er verstuurd is),
+   en daarna `SIGNPATH_API_TOKEN` en `SIGNPATH_ORGANIZATION_ID` als Actions-secrets zetten. Elke
    release moet daarna in SignPath worden goedgekeurd voordat er iets gepubliceerd wordt.
 
 ## Na de eerste push

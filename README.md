@@ -395,13 +395,17 @@ account, een MFA-controle en een handmatige goedkeuring per release aan.
    (AGPL-3.0) en de pagina waar de releases te downloaden zijn. Doe dit als er al versies
    downloadbaar zijn: SignPath weegt de reputatie van het project mee en kan een prille
    repository afwijzen. Reken op weken, niet op dagen. De antwoorden per formulierveld staan in
-   [docs/signpath-aanvraag.md](docs/signpath-aanvraag.md).
+   [docs/signpath-aanvraag.md](docs/signpath-aanvraag.md); wat er bij een eerdere poging is
+   verstuurd staat in [docs/signpath-aanvraag-log.md](docs/signpath-aanvraag-log.md), zodat een
+   tweede aanvraag kan laten zien wat er sindsdien is veranderd.
 3. **Inrichten in SignPath** (na goedkeuring): een organisatie, project `helder` met GitHub als
    *trusted build system*, signing policy `release-signing`, en twee artifact configurations —
    `helder-app` (alleen `Helder.exe` uit `win-unpacked`) en `helder-installer` (alleen
-   `Helder-Setup-*.exe`). Upload een proefartefact en laat SignPath de XML genereren; haal daarna
-   de ondertekeningsopdracht weg bij de Electron-DLL's, want die zijn niet van ons. Waarom dat zo
-   moet, staat in [docs/code-signing-policy.md](docs/code-signing-policy.md#wat-wordt-ondertekend).
+   `Helder-Setup-*.exe`). De XML staat klaar in
+   [docs/signpath/artifact-configurations](docs/signpath/artifact-configurations/helder-app.xml)
+   en de portalstappen staan in [docs/signpath-inrichting.md](docs/signpath-inrichting.md). Alleen
+   onze eigen binary wordt ondertekend, niet de DLL's van Electron. Waarom dat zo moet, staat in
+   [docs/code-signing-policy.md](docs/code-signing-policy.md#wat-wordt-ondertekend).
 4. **Secrets zetten**: `SIGNPATH_API_TOKEN` (een gebruiker met submitter-recht in het project) en
    `SIGNPATH_ORGANIZATION_ID`, onder *Settings → Secrets and variables → Actions*.
 5. **Nieuwe tag pushen en de aanvraag goedkeuren** in het SignPath-portaal. Zodra de secrets er
@@ -611,15 +615,17 @@ npm run license:check   # faalt als een bronbestand de header mist (handig in CI
   volgorde — licentieheaders, release-opmerkingen, de documentatie-eisen van SignPath, de
   ondertekeningspijplijn, typecheck en build, de btw-test in de echte app, de app-map en de
   hashcontrole. Losse stappen kunnen ook: `npm run typecheck`, `npm test`,
-  `npm run test:release-notes`, `npm run test:documentatie`, `npm run test:signpath` en
-  `npm run license:check`. `npm test` bouwt eerst en loopt daarna
+  `npm run test:release-notes`, `npm run test:documentatie`, `npm run test:signpath`,
+  `npm run test:signpath-configuraties`, `npm run test:signalen` en `npm run license:check`. `npm test` bouwt eerst en loopt daarna
   de btw-test in de echte app door; dat duurt ongeveer een minuut. De test krijgt een eigen tijdelijke profielmap mee, dus je
   administratie blijft buiten schot en de app mag gewoon openstaan.
 - Elke pull request draait [CI](.github/workflows/ci.yml): licentiecontrole,
   release-opmerkingen, de **documentatie-eisen van SignPath** (`scripts/test-documentatie.mjs`:
   de regel van de Foundation, de teamrollen, de links naar download- en privacypagina en of die
   links bestaan), de **ondertekeningspijplijn** (`scripts/test-signpath.mjs`: geen eigen zip,
-  verplichte invoer van de SignPath-actie, terugzetten met controle), typecheck en build, de
+  verplichte invoer van de SignPath-actie, terugzetten met controle), de **signalen**
+  (`scripts/test-signpath-signalen.mjs`: het telwerk achter de cijfers bij een aanvraag —
+  concept-releases, bots en eigen issues tellen niet als reputatie), typecheck en build, de
   **btw-test** (`node scripts/test-btw.mjs`, op een
   Windows-runner), het bouwen van de app-map en de hashcontrole. Een PR waarin de btw-regel voor
   stichting of vereniging breekt wordt daardoor rood, net als een PR waarin de app en `dist/` uit

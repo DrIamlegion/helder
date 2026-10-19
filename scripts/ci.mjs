@@ -55,6 +55,16 @@ const stappen = [
     argumenten: ["scripts/test-signpath.mjs"],
   },
   {
+    naam: "Configuraties (SignPath)",
+    commando: process.execPath,
+    argumenten: ["scripts/test-signpath-configuraties.mjs"],
+  },
+  {
+    naam: "Signalen (SignPath)",
+    commando: process.execPath,
+    argumenten: ["scripts/test-signpath-signalen.mjs"],
+  },
+  {
     naam: "Automatische back-up",
     commando: process.execPath,
     argumenten: ["scripts/test-backup.mjs"],

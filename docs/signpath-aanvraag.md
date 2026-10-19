@@ -5,8 +5,14 @@ het formulier zoals het op 19 oktober 2026 live stond (HubSpot-formulier
 `bf62807d-bb72-4e45-9bde-1f3a53ba2472`), inclusief de keuzelijsten. De antwoorden staan in het
 Engels omdat het formulier Engels is; de rest van dit document is Nederlands.
 
-**Lees eerst [Verwachting](#verwachting) hieronder.** Een aanvraag die nu wordt afgewezen, kost
-weken; dezelfde aanvraag over een maand of twee heeft een reële kans.
+**De aanvraag is op 19 oktober 2026 verstuurd**; wat er werkelijk in het formulier stond staat in
+[signpath-aanvraag-log.md](signpath-aanvraag-log.md). De afweging in [Verwachting](#verwachting)
+blijft staan, want die is weer actueel zodra de Foundation nee zegt of om meer informatie vraagt —
+dan is de eerste optie hieronder het antwoord.
+
+Wat er bij een eerdere poging werkelijk is verstuurd — en hoe de repository er toen voor stond —
+staat in [signpath-aanvraag-log.md](signpath-aanvraag-log.md). Dit blad verandert mee met het
+project; dat bestand niet, en juist daarom kun je de twee vergelijken.
 
 ## Verwachting
 
@@ -19,9 +25,9 @@ tegenover wat deze repository op dit moment laat zien:
 | --- | --- |
 | Eerste commit | 18 oktober 2026 (één dag oud) |
 | Sterren / forks / issues | 0 / 0 / 0 |
-| Releases | 4 tags, samen 1 download van een installer |
+| Releases | 5 tags (v0.1.7–v0.1.11), 13 downloads |
 | Media, blogs, discussies | geen |
-| Onderhoud | 15 commits, CI groen op elke PR |
+| Onderhoud | 19 commits, CI groen op elke PR |
 
 Dat is een werkend, gedocumenteerd en controleerbaar project, maar nog geen *bekend* project. De
 reputatievraag is in het formulier verplicht en dit is precies het veld waarop een prille
@@ -37,25 +43,31 @@ repository wordt afgewezen. Twee eerlijke opties:
    heeft in plaats van te discussiëren over het beleid (de voorwaarden vragen daar ook om:
    *"Please don't argue with us"*).
 
+Er is voor de tweede optie gekozen: de aanvraag is op 19 oktober 2026 verstuurd. Wijst de Foundation
+hem af, dan is de eerste optie het antwoord, met [signpath-signalen.json](signpath-signalen.json) als
+bewijs dat het project sindsdien gegroeid is.
+
 Wat je hoeft te doen voordat je op *Submit* drukt, staat in [Vooraf](#vooraf).
 
 ## Vooraf
 
-De voorwaarden vragen meer dan een formulier. Deze lijst is afgevinkt zodra alles klopt:
+De voorwaarden vragen meer dan een formulier. Deze lijst is afgevinkt zodra alles klopt; wat de
+repository zelf bewijst staat aan, de drie punten die alleen jij kunt zien (MFA, de rolverdeling en
+de repo-instellingen) blijven open tot je ze hebt nagelopen.
 
-- [ ] **Deze documenten staan op GitHub** — de URL's in dit blad wijzen naar de branch `main`;
+- [x] **Deze documenten staan op GitHub** — de URL's in dit blad wijzen naar de branch `main`;
       commit en push ze voordat je het formulier verstuurt, anders krijgt de Foundation een 404.
-- [ ] **Repository openbaar** — <https://github.com/DrIamlegion/helder> is openbaar.
-- [ ] **Eén OSI-licentie voor alle componenten** — AGPL-3.0, `"license": "AGPL-3.0-only"`, elke
+- [x] **Repository openbaar** — <https://github.com/DrIamlegion/helder> is openbaar.
+- [x] **Eén OSI-licentie voor alle componenten** — AGPL-3.0, `"license": "AGPL-3.0-only"`, elke
       bronfile met een SPDX-header (`npm run license:check`).
-- [ ] **Released in de vorm die ondertekend wordt** — de NSIS-installer bestaat en is
+- [x] **Released in de vorm die ondertekend wordt** — de NSIS-installer bestaat en is
       downloadbaar: <https://github.com/DrIamlegion/helder/releases>
-- [ ] **Gedocumenteerd op de downloadpagina** — [download.md](download.md) beschrijft wat de app
+- [x] **Gedocumenteerd op de downloadpagina** — [download.md](download.md) beschrijft wat de app
       doet en hoe je hem installeert.
-- [ ] **Code signing policy op de homepage en de downloadpagina**, met de letterlijke regel en de
+- [x] **Code signing policy op de homepage en de downloadpagina**, met de letterlijke regel en de
       teamrollen — zie [README → Code signing policy](../README.md#code-signing-policy) en
       [code-signing-policy.md](code-signing-policy.md).
-- [ ] **Privacybeleid** — [privacy.md](privacy.md). Nodig omdat de app bij het starten contact
+- [x] **Privacybeleid** — [privacy.md](privacy.md). Nodig omdat de app bij het starten contact
       maakt met GitHub Releases; de formulering "verstuurt nooit iets" zou daarom onwaar zijn.
 - [ ] **MFA aan** op GitHub (Settings → Password and authentication) *en* later op SignPath; de
       voorwaarden eisen dat van ieder teamlid.
@@ -145,7 +157,7 @@ Dit is het veld dat over de aanvraag beslist. Hieronder de eerlijke versie: geen
 gebruikers, geen opgeblazen cijfers.
 
 ```
-Helder is a new project. The repository became public on 18 October 2026 and the first release (v0.1.7) was published the same day; four tagged releases have followed, the latest v0.1.10.
+Helder is a new project. The repository became public on 18 October 2026 and the first release (v0.1.7) was published the same day; five tagged releases have followed, the latest v0.1.11.
 
 What can be verified today:
 - Every release is built and published by GitHub Actions from a tag in this repository, with the installer and latest.yml as release assets: https://github.com/DrIamlegion/helder/releases
