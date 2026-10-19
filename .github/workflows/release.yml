@@ -94,18 +94,16 @@ jobs:
         run: npx electron-builder --win --dir --x64
 
       # Stap 2: de losse bestanden laten ondertekenen, zodat de installer ze al ondertekend inpakt.
-      - name: App-map inpakken
-        if: env.SIGNPATH_API_TOKEN != ''
-        shell: pwsh
-        run: Compress-Archive -Path release/win-unpacked/* -DestinationPath app-unsigned.zip -Force
-
+      # De bestanden gaan onverpakt de upload in: upload-artifact maakt zelf de zip, en daarvan is
+      # het root-element van de artifact configuration <zip-file>. Zelf nog een zip maken zou een
+      # zip in een zip opleveren, en dan past de configuratie niet meer op het artefact.
       - name: App-map uploaden
         id: upload-app
         if: env.SIGNPATH_API_TOKEN != ''
         uses: actions/upload-artifact@v4
         with:
           name: helder-app-unsigned
-          path: app-unsigned.zip
+          path: release/win-unpacked/
           if-no-files-found: error
 
       - name: App-map ondertekenen
@@ -119,12 +117,27 @@ jobs:
           artifact-configuration-slug: helder-app
           github-artifact-id: ${{ steps.upload-app.outputs.artifact-id }}
           wait-for-completion: true
+          # Een app-map van honderden megabytes kan langer duren dan de standaard 10 minuten.
+          wait-for-completion-timeout-in-seconds: 1800
+          download-signed-artifact-timeout-in-seconds: 600
+          # Standaard pakt de actie het ondertekende archief uit; zo staat het er expliciet.
+          skip-decompress: false
           output-artifact-directory: signed-app
 
+      # De actie pakt het ondertekende archief zelf uit (skip-decompress staat standaard uit), dus
+      # signed-app bevat bestanden en geen zip meer. We zoeken Helder.exe recursief op: of de
+      # uitgepakte map wel of geen map eromheen heeft, hangt af van hoe upload-artifact het
+      # artefact verpakt heeft, en de map waarin Helder.exe staat is de app-map. Ontbreekt hij, dan
+      # stoppen we hier in plaats van een ongetekende installer te publiceren.
       - name: Ondertekende bestanden terugzetten
         if: env.SIGNPATH_API_TOKEN != ''
         shell: pwsh
-        run: Expand-Archive -Path (Get-ChildItem signed-app -Filter *.zip | Select-Object -First 1).FullName -DestinationPath release/win-unpacked -Force
+        run: |
+          $exe = Get-ChildItem "signed-app" -Recurse -File -Filter "Helder.exe" | Select-Object -First 1
+          if (-not $exe) {
+            throw "signed-app bevat geen Helder.exe; controleer output-artifact-directory."
+          }
+          Copy-Item -Path (Join-Path $exe.Directory.FullName "*") -Destination "release/win-unpacked" -Recurse -Force
 
       # Stap 3: de installer bouwen bovenop de al ondertekende bestanden. In dit pad schrijft
       # electron-builder app-update.yml niet zelf, dus doen we dat hier.
@@ -141,19 +154,15 @@ jobs:
       - name: Installer bouwen
         run: npx electron-builder --win nsis --x64 --prepackaged release/win-unpacked --publish never
 
-      # Stap 4: ook de installer zelf ondertekenen.
-      - name: Installer inpakken
-        if: env.SIGNPATH_API_TOKEN != ''
-        shell: pwsh
-        run: Compress-Archive -Path release/Helder-Setup-*.exe -DestinationPath installer-unsigned.zip -Force
-
+      # Stap 4: ook de installer zelf ondertekenen. Ook hier geen eigen zip: upload-artifact
+      # verpakt de exe zelf, zodat de artifact configuration één <pe-file> in een <zip-file> ziet.
       - name: Installer uploaden
         id: upload-installer
         if: env.SIGNPATH_API_TOKEN != ''
         uses: actions/upload-artifact@v4
         with:
           name: helder-installer-unsigned
-          path: installer-unsigned.zip
+          path: release/Helder-Setup-*.exe
           if-no-files-found: error
 
       - name: Installer ondertekenen
@@ -167,16 +176,29 @@ jobs:
           artifact-configuration-slug: helder-installer
           github-artifact-id: ${{ steps.upload-installer.outputs.artifact-id }}
           wait-for-completion: true
+          wait-for-completion-timeout-in-seconds: 1800
+          download-signed-artifact-timeout-in-seconds: 600
+          skip-decompress: false
           output-artifact-directory: signed-installer
 
       - name: Ondertekende installer terugzetten
         if: env.SIGNPATH_API_TOKEN != ''
         shell: pwsh
-        run: Expand-Archive -Path (Get-ChildItem signed-installer -Filter *.zip | Select-Object -First 1).FullName -DestinationPath release -Force
-
-      # Stap 5: ondertekenen verandert de bytes, dus latest.yml moet opnieuw.
-      - name: Update-metadata opnieuw genereren
         run: |
+          $ondertekend = Get-ChildItem "signed-installer" -Recurse -File -Filter "Helder-Setup-*.exe" | Select-Object -First 1
+          if (-not $ondertekend) {
+            throw "signed-installer bevat geen ondertekende installer; controleer output-artifact-directory."
+          }
+          Copy-Item -Path $ondertekend.FullName -Destination "release" -Force
+
+      # Stap 5: ondertekenen verandert de bytes, dus latest.yml moet opnieuw. De blockmap van
+      # electron-builder hoort bij de ongetekende installer en klopt daarna niet meer; latest.yml
+      # verwijst er ook niet naar (geen blockMapSize), dus differentiële updates zijn er niet en
+      # een verouderde blockmap publiceren zou alleen verwarren.
+      - name: Update-metadata opnieuw genereren
+        shell: bash
+        run: |
+          rm -f release/Helder-Setup-*.exe.blockmap
           node scripts/latest-yml.mjs
           node scripts/latest-yml.mjs --check
 
@@ -200,7 +222,6 @@ jobs:
           body_path: release/release-body.md
           files: |
             release/Helder-Setup-*.exe
-            release/Helder-Setup-*.exe.blockmap
             release/latest.yml
           generate_release_notes: false
           draft: false

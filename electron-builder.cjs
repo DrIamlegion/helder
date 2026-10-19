@@ -77,7 +77,8 @@ module.exports = {
   // gebruiker hem kan lezen (Help → Licentie opent dit bestand).
   extraResources: ["LICENSE"],
   // Het updatekanaal zijn de releases van deze repository. De release-workflow zet bij elke
-  // tag `Helder-Setup-<versie>.exe`, de blockmap en `latest.yml` als assets op die release;
+  // tag `Helder-Setup-<versie>.exe` en `latest.yml` als assets op die release; de blockmap
+  // vervalt, omdat latest.yml er niet naar verwijst en ondertekenen de bytes verandert.
   // electron-updater leest de lijst met releases en haalt `latest.yml` daar op. Zo is er geen
   // eigen updateserver nodig. Met HELDER_UPDATE_URL kun je de app tijdens het testen naar een
   // lokaal kanaal wijzen.

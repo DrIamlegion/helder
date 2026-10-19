@@ -148,7 +148,7 @@ gebruikers, geen opgeblazen cijfers.
 Helder is a new project. The repository became public on 18 October 2026 and the first release (v0.1.7) was published the same day; four tagged releases have followed, the latest v0.1.10.
 
 What can be verified today:
-- Every release is built and published by GitHub Actions from a tag in this repository, with the installer, its blockmap and latest.yml as release assets: https://github.com/DrIamlegion/helder/releases
+- Every release is built and published by GitHub Actions from a tag in this repository, with the installer and latest.yml as release assets: https://github.com/DrIamlegion/helder/releases
 - CI runs on every pull request: license headers, release-note extraction, typecheck and build, an end-to-end test that starts the real Electron app and exercises the VAT calculation, packaging, and a hash check that ties the packaged app back to the commit (https://github.com/DrIamlegion/helder/actions).
 - The complete source is published under AGPL-3.0, with an SPDX header in every source file and the license shipped inside the installer.
 - The application's functionality is documented feature by feature in the README and on the download page.

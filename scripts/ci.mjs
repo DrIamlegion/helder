@@ -50,6 +50,11 @@ const stappen = [
     argumenten: ["scripts/test-documentatie.mjs"],
   },
   {
+    naam: "Ondertekeningspijplijn (SignPath)",
+    commando: process.execPath,
+    argumenten: ["scripts/test-signpath.mjs"],
+  },
+  {
     naam: "Automatische back-up",
     commando: process.execPath,
     argumenten: ["scripts/test-backup.mjs"],

@@ -51,6 +51,13 @@ jobs:
       - name: Documentatie (SignPath)
         run: npm run test:documentatie
 
+      # De ondertekeningsstappen zijn zonder SignPath-account niet te draaien, dus controleert deze
+      # test hun structuur: geen eigen zip (upload-artifact maakt die), de verplichte invoer van de
+      # actie, en terugkopiëren in plaats van Expand-Archive op een archief dat de actie al heeft
+      # uitgepakt. Zulke fouten zou je anders pas bij de eerste echte release zien.
+      - name: Ondertekeningspijplijn (SignPath)
+        run: npm run test:signpath
+
       - name: Automatische back-up
         run: npm run test:backup
 

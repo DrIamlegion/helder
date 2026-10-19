@@ -112,7 +112,7 @@ repository; `package-lock.json` is met ±340 kB het grootste bestand dat meegaat
 - Nieuwe versie: hoog `version` in `package.json` op, schrijf de sectie in `CHANGELOG.md`, commit,
   tag en push de tag.
 - Het updatekanaal zijn de releases van de repository zelf (`provider: github` in
-  `electron-builder.cjs`, met `owner` en `repo`). De release-workflow zet de installer, de
-  blockmap en `latest.yml` op de release; de app haalt `latest.yml` daar op. Er is geen eigen
+  `electron-builder.cjs`, met `owner` en `repo`). De release-workflow zet de installer en
+  `latest.yml` op de release; de app haalt `latest.yml` daar op. Er is geen eigen
   updateserver en geen handmatige upload. Installaties van vóór deze wijziging hebben nog het
   oude adres in hun eigen `app-update.yml` en moeten één keer met de hand worden bijgewerkt.

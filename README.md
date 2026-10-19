@@ -353,10 +353,11 @@ Wat er in deze repo al voor klaarstaat:
 - [docs/code-signing-policy.md](docs/code-signing-policy.md) — het ondertekeningsbeleid dat
   SignPath van deelnemers vraagt (wat wordt ondertekend, hoe builds geverifieerd worden,
   wie goedkeurt).
-- [.github/workflows/release.yml](.github/workflows/release.yml) — bouwt op een tag, laat de
-  app-bestanden ondertekenen, bouwt de installer bovenop die ondertekende bestanden, laat de
+- [.github/workflows/release.yml](.github/workflows/release.yml) — bouwt op een tag, laat
+  `Helder.exe` ondertekenen, bouwt de installer bovenop dat ondertekende bestand, laat de
   installer ondertekenen, werkt `latest.yml` bij en publiceert de release. Zonder SignPath-secrets
-  bouwt de workflow ongetekend door, zodat de pijplijn testbaar blijft.
+  bouwt de workflow ongetekend door, zodat de pijplijn testbaar blijft;
+  `npm run test:signpath` bewaakt de opbouw van die stappen.
 - [scripts/latest-yml.mjs](scripts/latest-yml.mjs) — maakt `latest.yml` opnieuw ná het
   ondertekenen (de sha512 verandert dan) en controleert met `--check` of hij klopt.
 - [scripts/verify-build.mjs](scripts/verify-build.mjs) — hashcontrole: elk bestand in de
@@ -397,9 +398,10 @@ account, een MFA-controle en een handmatige goedkeuring per release aan.
    [docs/signpath-aanvraag.md](docs/signpath-aanvraag.md).
 3. **Inrichten in SignPath** (na goedkeuring): een organisatie, project `helder` met GitHub als
    *trusted build system*, signing policy `release-signing`, en twee artifact configurations —
-   `helder-app` (de losse bestanden uit `win-unpacked`) en `helder-installer` (de NSIS-installer).
-   Leg in de configuratie de productnaam en het versienummer vast; de Foundation vraagt dat de
-   metadata klopt met wat er ondertekend wordt.
+   `helder-app` (alleen `Helder.exe` uit `win-unpacked`) en `helder-installer` (alleen
+   `Helder-Setup-*.exe`). Upload een proefartefact en laat SignPath de XML genereren; haal daarna
+   de ondertekeningsopdracht weg bij de Electron-DLL's, want die zijn niet van ons. Waarom dat zo
+   moet, staat in [docs/code-signing-policy.md](docs/code-signing-policy.md#wat-wordt-ondertekend).
 4. **Secrets zetten**: `SIGNPATH_API_TOKEN` (een gebruiker met submitter-recht in het project) en
    `SIGNPATH_ORGANIZATION_ID`, onder *Settings → Secrets and variables → Actions*.
 5. **Nieuwe tag pushen en de aanvraag goedkeuren** in het SignPath-portaal. Zodra de secrets er
@@ -527,8 +529,8 @@ De geïnstalleerde app werkt zichzelf bij — je hoeft nooit meer een nieuwe ins
 `publish` in [electron-builder.cjs](electron-builder.cjs) staat op de GitHub-provider met
 `owner: DrIamlegion` en `repo: helder`, en diezelfde regels belanden via
 [scripts/app-update-yml.mjs](scripts/app-update-yml.mjs) in `app-update.yml` in de app. Bij elke
-tag zet de release-workflow `Helder-Setup-<versie>.exe`, de blockmap en `latest.yml` als assets op
-de release; `electron-updater` leest die lijst en haalt `latest.yml` daar op. Er is dus geen eigen
+tag zet de release-workflow `Helder-Setup-<versie>.exe` en `latest.yml` als assets op de release;
+`electron-updater` leest die lijst en haalt `latest.yml` daar op. Er is dus geen eigen
 updateserver en geen handmatige upload.
 
 `npm run test:update-kanaal` bewaakt dat: wijst `publish` terug naar een voorbeeldhost, dan faalt
@@ -606,16 +608,19 @@ npm run license:check   # faalt als een bronbestand de header mist (handig in CI
 - Bijdragen vallen onder dezelfde AGPL-3.0-licentie; door een pull request in te dienen ga je
   daarmee akkoord.
 - Draai vóór een pull request `npm run ci`: dezelfde controles als de CI-workflow, in dezelfde
-  volgorde — licentieheaders, release-opmerkingen, de documentatie-eisen van SignPath, typecheck
-  en build, de btw-test in de echte app, de app-map en de hashcontrole. Losse stappen kunnen ook:
-  `npm run typecheck`, `npm test`, `npm run test:release-notes`, `npm run test:documentatie` en
+  volgorde — licentieheaders, release-opmerkingen, de documentatie-eisen van SignPath, de
+  ondertekeningspijplijn, typecheck en build, de btw-test in de echte app, de app-map en de
+  hashcontrole. Losse stappen kunnen ook: `npm run typecheck`, `npm test`,
+  `npm run test:release-notes`, `npm run test:documentatie`, `npm run test:signpath` en
   `npm run license:check`. `npm test` bouwt eerst en loopt daarna
   de btw-test in de echte app door; dat duurt ongeveer een minuut. De test krijgt een eigen tijdelijke profielmap mee, dus je
   administratie blijft buiten schot en de app mag gewoon openstaan.
 - Elke pull request draait [CI](.github/workflows/ci.yml): licentiecontrole,
   release-opmerkingen, de **documentatie-eisen van SignPath** (`scripts/test-documentatie.mjs`:
   de regel van de Foundation, de teamrollen, de links naar download- en privacypagina en of die
-  links bestaan), typecheck en build, de **btw-test** (`node scripts/test-btw.mjs`, op een
+  links bestaan), de **ondertekeningspijplijn** (`scripts/test-signpath.mjs`: geen eigen zip,
+  verplichte invoer van de SignPath-actie, terugzetten met controle), typecheck en build, de
+  **btw-test** (`node scripts/test-btw.mjs`, op een
   Windows-runner), het bouwen van de app-map en de hashcontrole. Een PR waarin de btw-regel voor
   stichting of vereniging breekt wordt daardoor rood, net als een PR waarin de app en `dist/` uit
   elkaar lopen — bouw dus altijd opnieuw voordat je pusht. De btw-test staat vóór de inpakstap,
