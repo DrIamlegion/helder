@@ -4,6 +4,13 @@ Wat er per versie verandert, nieuwste bovenaan. Dit bestand is de bron: de bouw 
 notities van de huidige versie in `latest.yml`, en de app toont ze in de update-kaart
 voordat je een update installeert.
 
+## 0.1.11 — 19 oktober 2026
+
+- Aan de app zelf verandert niets: deze uitgave test de vernieuwde release-pijplijn, waarin de
+  ondertekeningsstappen van SignPath gerepareerd zijn.
+- Updates werken zoals voorheen. De app haalt nog steeds de volledige installer op; alleen de
+  bestanden op de releasepagina zijn anders, want de blockmap van de installer gaat niet meer mee.
+
 ## 0.1.10 — 18 oktober 2026
 
 - De desktop-app bewaart je administratie nu zelf: bij het starten en daarna hooguit elk uur
