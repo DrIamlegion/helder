@@ -7,6 +7,9 @@ Gebouwd met **Vite**, **React** en **TypeScript**, zonder backend. De data staat
 `localStorage` van je browser. Bij de eerste start vult een **wizard** je bedrijfsgegevens in;
 daarna begin je met een lege administratie — er zitten geen voorbeeldklanten of -facturen in.
 
+[**Download de installer**](docs/download.md) · [Privacybeleid](docs/privacy.md) ·
+[Code signing policy](docs/code-signing-policy.md)
+
 ## Snel starten
 
 ```bash
@@ -238,7 +241,8 @@ Wil je Helder als gewoon Windows-programma met een installer, dan bouw je die ze
 - De installer is **nog niet ondertekend**: de gratis route via SignPath Foundation staat klaar
   in de release-workflow, maar is pas actief zodra de repository openbaar is en het
   SignPath-project is goedgekeurd. Tot die tijd zegt SmartScreen de eerste keer "Windows heeft uw
-  pc beschermd"; kies *Meer informatie* → *Toch uitvoeren*. Zie *Ondertekening (code signing)*.
+  pc beschermd"; kies *Meer informatie* → *Toch uitvoeren*. Wat er nog moet gebeuren staat in
+  de aanvraagchecklist onder *Ondertekening (code signing)*.
 - De app start direct op, zonder server en zonder internet. Je administratie staat in
   `%APPDATA%\Helder` en blijft ook na verwijderen bewaard (`deleteAppDataOnUninstall: false`).
 - Het venster opent op een maat die bij je scherm past: hoogstens 1360 × 900, en kleiner als je
@@ -334,9 +338,13 @@ kosten vragen iets anders van je — Helder gaat voor de eerste:
    (geen dual licensing, geen proprietary delen), een publieke repository met verifieerbare
    builds, actief onderhoud, MFA en handmatige goedkeuring per release
    ([SignPath Foundation](https://signpath.org/), [voorwaarden](https://signpath.org/terms.html)).
-2. **Als MSIX via de Microsoft Store publiceren** — gratis account en Microsoft ondertekent na
-   review, maar de Store doet dan de updates (dus zonder `electron-updater`), de app krijgt
-   MSIX-bestandsvirtualisatie en moet door de Store-review. Niet gekozen.
+2. **Als MSIX via de Microsoft Store publiceren** — de inschrijving kost in de nieuwe
+   inschrijfflow niets, voor een persoonlijk én een bedrijfsaccount; Microsoft ondertekent na
+   review en de Store doet dan de updates (dus zonder `electron-updater`). Dit is de **enige
+   route waarbij de waarschuwing meteen weg is**: een MSIX uit de Store wordt door Microsoft
+   opnieuw ondertekend, dus SmartScreen heeft niets te vragen. Nadelen: de app krijgt
+   MSIX-bestandsvirtualisatie, elke release moet door de Store-review, en de update-kaart van de
+   app vervalt. Niet gekozen.
 
 Wat er in deze repo al voor klaarstaat:
 
@@ -356,10 +364,50 @@ Wat er in deze repo al voor klaarstaat:
   gelijk zijn aan HEAD respectievelijk de verse build in `dist/`, plus `resources/LICENSE`, de
   versie en de tag. De workflow draait hem ná het ondertekenen en nog eens ná `latest.yml`.
 
-Wat alleen jij kunt doen: de repository **openbaar** maken op GitHub, een SignPath-account
-aanvragen met dit project en beleid, de twee secrets (`SIGNPATH_API_TOKEN`,
-`SIGNPATH_ORGANIZATION_ID`) zetten, en per release de ondertekeningsaanvraag goedkeuren.
-Hoe je die eerste push doet — met de controlelijst vooraf, de repo-instellingen en de eerste
+### Code signing policy
+
+SignPath vraagt dat het ondertekeningsbeleid op de homepage en op de downloadpagina staat, met
+de letterlijke regel hieronder. Die regel staat daarom hier en op
+[docs/download.md](docs/download.md), met een link naar het beleid zelf:
+[docs/code-signing-policy.md](docs/code-signing-policy.md).
+
+> Free code signing provided by SignPath.io, certificate by SignPath Foundation.
+
+**Rollen en hun leden.** Helder heeft één maintainer, dus de drie rollen die de Foundation
+vraagt vallen bij hem samen: auteurs/committers, reviewers en approvers zijn
+[@DrIamlegion](https://github.com/DrIamlegion). Elke pull request van buiten wordt door hem
+beoordeeld voordat hij in `main` komt, en elke tag wordt door hem in het SignPath-portaal
+goedgekeurd voordat er ondertekend wordt. MFA staat verplicht aan op zowel GitHub als SignPath.
+
+**Privacy.** Helder bewaart je administratie lokaal en stuurt die niet door; de enige verbinding
+die de app zelf maakt is de updatecontrole bij GitHub Releases. Dat staat precies beschreven in
+[docs/privacy.md](docs/privacy.md).
+
+### De aanvraag in stappen
+
+Dit is de hele fix voor de waarschuwing; alleen jij kunt deze stappen doen, want er hangen een
+account, een MFA-controle en een handmatige goedkeuring per release aan.
+
+1. **Repository openbaar op GitHub.** SignPath controleert de bron én dat de build uit die bron
+   komt; een privé-repository komt niet in aanmerking.
+2. **Aanvragen** via [signpath.org](https://signpath.org/) met de repository-URL, de licentie
+   (AGPL-3.0) en de pagina waar de releases te downloaden zijn. Doe dit als er al versies
+   downloadbaar zijn: SignPath weegt de reputatie van het project mee en kan een prille
+   repository afwijzen. Reken op weken, niet op dagen. De antwoorden per formulierveld staan in
+   [docs/signpath-aanvraag.md](docs/signpath-aanvraag.md).
+3. **Inrichten in SignPath** (na goedkeuring): een organisatie, project `helder` met GitHub als
+   *trusted build system*, signing policy `release-signing`, en twee artifact configurations —
+   `helder-app` (de losse bestanden uit `win-unpacked`) en `helder-installer` (de NSIS-installer).
+   Leg in de configuratie de productnaam en het versienummer vast; de Foundation vraagt dat de
+   metadata klopt met wat er ondertekend wordt.
+4. **Secrets zetten**: `SIGNPATH_API_TOKEN` (een gebruiker met submitter-recht in het project) en
+   `SIGNPATH_ORGANIZATION_ID`, onder *Settings → Secrets and variables → Actions*.
+5. **Nieuwe tag pushen en de aanvraag goedkeuren** in het SignPath-portaal. Zodra de secrets er
+   zijn, zet de workflow `HELDER_SIGN_PUBLISHER=SignPath Foundation` in `app-update.yml`, zodat
+   `electron-updater` de uitgever van elke update controleert. Ontbreken de secrets, dan meldt de
+   workflow in de samenvatting dat de release ongetekend is.
+
+Hoe je de eerste push doet — met de controlelijst vooraf, de repo-instellingen en de eerste
 tag — staat stap voor stap in [docs/publicatie.md](docs/publicatie.md).
 
 **Let op bij het testen:** `HELDER_SIGN_PUBLISHER` zet de uitgever in `app-update.yml`, en

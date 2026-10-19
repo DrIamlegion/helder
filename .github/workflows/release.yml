@@ -39,6 +39,19 @@ jobs:
 
       - run: npm ci
 
+      # De uitgever in app-update.yml hoort bij de handtekening: electron-updater vergelijkt de
+      # naam van de ondertekenaar met dit veld. Zet hem daarom alleen als er echt ondertekend
+      # wordt — een ongetekende build met deze naam zou elke volgende update afkeuren.
+      - name: Uitgever van de ondertekening vastleggen
+        shell: bash
+        run: |
+          if [[ -n "$SIGNPATH_API_TOKEN" ]]; then
+            echo "HELDER_SIGN_PUBLISHER=SignPath Foundation" >> "$GITHUB_ENV"
+            echo "Ondertekend door SignPath Foundation; uitgever vastgezet in app-update.yml."
+          else
+            echo "::warning title=Ongetekende release::SIGNPATH_API_TOKEN ontbreekt, dus deze release wordt ongetekend gepubliceerd en Windows kan waarschuwen."
+          fi
+
       - name: Versie en tag kloppen?
         shell: bash
         run: |

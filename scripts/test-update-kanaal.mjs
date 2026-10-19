@@ -57,6 +57,28 @@ assert.match(
   "de release-workflow zet latest.yml als asset op de release"
 );
 
+// 4. Ondertekent de pijplijn, dan hoort de uitgever in app-update.yml: electron-updater
+//    vergelijkt de naam van de ondertekenaar met dat veld en weigert een update die niet klopt.
+const metUitgever = regelsVoorAppUpdate({
+  ...config,
+  win: { ...config.win, publisherName: "SignPath Foundation" },
+});
+assert.ok(
+  metUitgever.includes("publisherName: SignPath Foundation"),
+  "app-update.yml noemt de uitgever zodra die in de configuratie staat"
+);
+
+// 5. En de workflow moet precies die naam zetten — maar alleen als er echt ondertekend wordt.
+//    Staat hij er ook zonder SignPath-secrets in, dan keurt een ongetekende update zichzelf af.
+assert.match(
+  workflow,
+  /if \[\[ -n "\$SIGNPATH_API_TOKEN" \]\][\s\S]{0,200}HELDER_SIGN_PUBLISHER=SignPath Foundation/,
+  "de release-workflow zet de uitgever alleen als de SignPath-secrets er zijn"
+);
+
 console.log(
   `Updatekanaal: github.com/${velden.owner}/${velden.repo}, latest.yml gaat mee met de release.`
+);
+console.log(
+  "Ondertekening: zodra er ondertekend wordt, staat SignPath Foundation als uitgever in app-update.yml."
 );

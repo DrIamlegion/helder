@@ -91,9 +91,10 @@ repository; `package-lock.json` is met ±340 kB het grootste bestand dat meegaat
    Zonder SignPath-secrets bouwt de workflow een **ongetekende** installer en publiceert die;
    Windows toont dan SmartScreen-waarschuwingen. Zie README → *Ondertekening*.
 
-4. **SignPath Foundation** aanvragen met de URL van de openbare repository, en daarna
-   `SIGNPATH_API_TOKEN` en `SIGNPATH_ORGANIZATION_ID` als Actions-secrets zetten. Elke release
-   moet daarna in SignPath worden goedgekeurd voordat er iets gepubliceerd wordt.
+4. **SignPath Foundation** aanvragen met de URL van de openbare repository
+   ([docs/signpath-aanvraag.md](signpath-aanvraag.md) heeft de antwoorden per formulierveld), en
+   daarna `SIGNPATH_API_TOKEN` en `SIGNPATH_ORGANIZATION_ID` als Actions-secrets zetten. Elke
+   release moet daarna in SignPath worden goedgekeurd voordat er iets gepubliceerd wordt.
 
 ## Na de eerste push
 

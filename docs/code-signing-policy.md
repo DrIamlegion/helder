@@ -4,6 +4,35 @@ Dit is het ondertekeningsbeleid van Helder, zoals SignPath Foundation dat van de
 open-sourceprojecten vraagt. Het beschrijft wat er wordt ondertekend, hoe vastgesteld wordt dat
 een build echt uit deze repository komt, en wie een release goedkeurt.
 
+> Free code signing provided by SignPath.io, certificate by SignPath Foundation.
+
+Die regel staat ook op de homepage en op de downloadpagina van het project —
+[README → Code signing policy](../README.md#code-signing-policy) en [download.md](download.md) —
+want de Foundation vraagt dat het beleid vanaf beide te vinden is.
+
+## Rollen en hun leden
+
+De Foundation vraagt een teamstructuur met drie rollen. Helder heeft één maintainer, dus alle
+drie vallen bij hem samen:
+
+- **Auteurs (committers)**: [@DrIamlegion](https://github.com/DrIamlegion) — schrijft de code en
+  beheert de repository.
+- **Reviewers**: [@DrIamlegion](https://github.com/DrIamlegion) — elke pull request van iemand
+  anders wordt door hem beoordeeld voordat hij in `main` komt. Commits van de maintainer zelf
+  gaan door dezelfde CI (licentieheaders, release-opmerkingen, typecheck, build, btw-test in de
+  echte app, hashcontrole).
+- **Approvers**: [@DrIamlegion](https://github.com/DrIamlegion) — keurt elke ondertekeningsaanvraag
+  in het SignPath-portaal goed.
+
+Alle leden gebruiken MFA op GitHub en op SignPath; dat is een voorwaarde om de repository te
+kunnen publiceren en om een aanvraag te kunnen indienen.
+
+## Privacy
+
+Wat de app met gegevens doet staat in [privacy.md](privacy.md): alles blijft lokaal, er is geen
+telemetrie, en de enige verbinding die de app zelf maakt is de updatecontrole bij GitHub
+Releases.
+
 ## Uitgever en certificaat
 
 - Helder wordt ondertekend met het certificaat van **SignPath Foundation**. Windows toont die
@@ -24,6 +53,12 @@ Per release worden twee dingen ondertekend, in deze volgorde:
 
 Daarna wordt `latest.yml` opnieuw gegenereerd, omdat ondertekenen de bytes en dus de sha512
 verandert (`node scripts/latest-yml.mjs`).
+
+De artifact configurations leggen vast wat er ondertekend wordt: in `helder-app` de
+`Helder.exe` en de bijbehorende binaries en DLL's, in `helder-installer` alleen
+`Helder-Setup-<versie>.exe`. Productnaam (`Helder`) en versienummer komen uit `package.json`, en
+de configuratie staat geen andere bestanden toe — zo kan er per ongeluk geen vreemd bestand mee
+ondertekend worden.
 
 ## Hoe een build wordt geverifieerd
 
