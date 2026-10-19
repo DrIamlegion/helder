@@ -100,7 +100,8 @@ https://github.com/DrIamlegion/helder/blob/main/docs/download.md
 
 Deze pagina moet volgens het formulier *"mention that the project uses the SignPath Foundation
 for code signing"*; [download.md](download.md) doet dat, en de README linkt er vanaf de
-homepage naar.
+homepage naar. Elke releasepagina krijgt dezelfde regel automatisch onderaan de release-opmerkingen
+(`scripts/release-body.mjs`), met een link naar de downloadpagina.
 
 ### Privacy Policy URL
 

@@ -21,6 +21,7 @@
     "test:release-notes": "node scripts/test-release-notes.mjs",
     "test:update-kanaal": "node scripts/test-update-kanaal.mjs",
     "test:backup": "node scripts/test-backup.mjs",
+    "test:documentatie": "node scripts/test-documentatie.mjs",
     "release:body": "node scripts/release-body.mjs",
     "sign:check": "node scripts/verify-signature.mjs",
     "latest-yml": "node scripts/latest-yml.mjs",

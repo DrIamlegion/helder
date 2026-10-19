@@ -131,6 +131,43 @@ assert.match(
   /\[CHANGELOG\.md\]\(https:\/\/github\.com\/DrIamlegion\/helder\/blob\/main\/CHANGELOG\.md\)/,
   "de releasepagina linkt naar de volledige geschiedenis"
 );
+
+// De vaste voet: SignPath Foundation vraagt dat ook de releasepagina's de regel van de
+// Foundation noemen en naar het beleid en de downloadpagina wijzen. Ontbreekt die voet, dan
+// voldoet de releasepagina niet aan de voorwaarden, ook al staat de homepage goed.
+assert.match(
+  body,
+  /\*\*Code signing policy\*\* — Free code signing provided by SignPath\.io, certificate by SignPath Foundation\./,
+  "de releasepagina noemt de regel van de Foundation"
+);
+assert.match(
+  body,
+  /\[Ondertekeningsbeleid\]\(https:\/\/github\.com\/DrIamlegion\/helder\/blob\/main\/docs\/code-signing-policy\.md\)/,
+  "de releasepagina linkt naar het ondertekeningsbeleid"
+);
+assert.match(
+  body,
+  /\[Download en installatie\]\(https:\/\/github\.com\/DrIamlegion\/helder\/blob\/main\/docs\/download\.md\)/,
+  "de releasepagina linkt naar de downloadpagina"
+);
+
+// De statusregel moet kloppen: zonder SignPath-secrets bouwt de workflow ongetekend, en dan mag
+// de pagina niet doen alsof er een handtekening op staat.
+assert.match(
+  bodyVoor(versie, { ondertekend: false }),
+  /Deze versie is nog niet ondertekend; Windows kan bij de eerste start waarschuwen\./,
+  "een ongetekende release zegt dat eerlijk op de releasepagina"
+);
+assert.match(
+  bodyVoor(versie, { ondertekend: true }),
+  /Deze versie is ondertekend met het certificaat van SignPath Foundation\./,
+  "een ondertekende release noemt de ondertekenaar"
+);
+assert.ok(
+  !/is ondertekend met het certificaat/.test(bodyVoor(versie, { ondertekend: false })),
+  "de ongetekende variant claimt geen handtekening"
+);
+
 assert.equal(bodyVoor("0.9.9"), null, "een versie zonder sectie levert geen lege pagina op");
 
 // En de workflow moet die beschrijving ook echt meesturen; anders blijft de pagina leeg.

@@ -53,7 +53,7 @@ wordt daarna nog apart opgebouwd). Zie [Ondertekening](#code-signing-policy).
 
 ## Code signing policy
 
-Free code signing provided by SignPath.io, certificate by SignPath Foundation.
+> Free code signing provided by SignPath.io, certificate by SignPath Foundation.
 
 Het volledige beleid — wat er ondertekend wordt, hoe de build geverifieerd wordt en wie een
 release goedkeurt — staat in [docs/code-signing-policy.md](code-signing-policy.md). De rollen en

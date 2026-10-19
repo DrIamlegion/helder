@@ -547,6 +547,11 @@ De **beschrijving op de releasepagina** komt uit dezelfde changelogpunten: de wo
 [scripts/release-body.mjs](scripts/release-body.mjs) en zet de uitkomst als `body_path` op de
 release. Zo leest een bezoeker op GitHub hetzelfde als een gebruiker in de update-kaart. Lokaal
 de tekst bekijken kan met `npm run release:body` — dat schrijft `release/release-body.md`.
+Onderaan staat een vaste voet met **Code signing policy**, de regel van de Foundation en de links
+naar het [beleid](docs/code-signing-policy.md) en de [downloadpagina](docs/download.md), zodat ook
+de releasepagina's aan de voorwaarden voldoen. Die voet zegt er eerlijk bij of de release
+ondertekend is: `HELDER_SIGN_PUBLISHER` bestaat alleen als er echt ondertekend wordt, dus zonder
+SignPath-secrets staat er "nog niet ondertekend" in plaats van een claim die niet klopt.
 
 **Lokaal testen zonder host**: start een statische server in `release/` en geef de app een ander
 kanaal mee. `HELDER_UPDATE_URL=http://127.0.0.1:8931` wijst de updater naar die server en
@@ -601,13 +606,16 @@ npm run license:check   # faalt als een bronbestand de header mist (handig in CI
 - Bijdragen vallen onder dezelfde AGPL-3.0-licentie; door een pull request in te dienen ga je
   daarmee akkoord.
 - Draai vóór een pull request `npm run ci`: dezelfde controles als de CI-workflow, in dezelfde
-  volgorde — licentieheaders, release-opmerkingen, typecheck en build, de btw-test in de echte
-  app, de app-map en de hashcontrole. Losse stappen kunnen ook: `npm run typecheck`, `npm test`,
-  `npm run test:release-notes` en `npm run license:check`. `npm test` bouwt eerst en loopt daarna
+  volgorde — licentieheaders, release-opmerkingen, de documentatie-eisen van SignPath, typecheck
+  en build, de btw-test in de echte app, de app-map en de hashcontrole. Losse stappen kunnen ook:
+  `npm run typecheck`, `npm test`, `npm run test:release-notes`, `npm run test:documentatie` en
+  `npm run license:check`. `npm test` bouwt eerst en loopt daarna
   de btw-test in de echte app door; dat duurt ongeveer een minuut. De test krijgt een eigen tijdelijke profielmap mee, dus je
   administratie blijft buiten schot en de app mag gewoon openstaan.
 - Elke pull request draait [CI](.github/workflows/ci.yml): licentiecontrole,
-  release-opmerkingen, typecheck en build, de **btw-test** (`node scripts/test-btw.mjs`, op een
+  release-opmerkingen, de **documentatie-eisen van SignPath** (`scripts/test-documentatie.mjs`:
+  de regel van de Foundation, de teamrollen, de links naar download- en privacypagina en of die
+  links bestaan), typecheck en build, de **btw-test** (`node scripts/test-btw.mjs`, op een
   Windows-runner), het bouwen van de app-map en de hashcontrole. Een PR waarin de btw-regel voor
   stichting of vereniging breekt wordt daardoor rood, net als een PR waarin de app en `dist/` uit
   elkaar lopen — bouw dus altijd opnieuw voordat je pusht. De btw-test staat vóór de inpakstap,
