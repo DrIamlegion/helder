@@ -45,19 +45,19 @@ De app is er ook als installeerbare web-app (PWA). De volledige functielijst sta
 **Systeemeisen:** Windows 10 of 11, x64. De download is ongeveer 110 MB, de geïnstalleerde app
 neemt ongeveer 400 MB in beslag. Geen internet nodig om te werken; alleen voor updates.
 
-**Over de waarschuwing van Windows.** De installers tot nu toe zijn **niet ondertekend**, waardoor
-Windows SmartScreen kan melden dat de uitgever onbekend is. Dat is geen foutmelding: kies
-*Meer informatie → Toch uitvoeren*. Zodra de aanvraag bij de SignPath Foundation is goedgekeurd,
-worden releases ondertekend en verdwijnt de melding "onbekende uitgever" (SmartScreen-reputatie
-wordt daarna nog apart opgebouwd). Zie [Ondertekening](#code-signing-policy).
+**Over de waarschuwing van Windows.** De installers zijn **niet ondertekend**, waardoor Windows
+SmartScreen kan melden dat de uitgever onbekend is. Dat is geen foutmelding: kies *Meer informatie →
+Toch uitvoeren*. De gratis ondertekeningsroute via de SignPath Foundation is op 20 oktober 2026
+afgewezen omdat het project nog te onbekend was, en een betaald certificaat is er nog niet. Zodra er
+wél ondertekend wordt, verdwijnt de melding "onbekende uitgever" (SmartScreen-reputatie wordt daarna
+nog apart opgebouwd). Zie [Ondertekening](#code-signing-policy).
 
 ## Code signing policy
 
-> Free code signing provided by SignPath.io, certificate by SignPath Foundation.
-
-Het volledige beleid — wat er ondertekend wordt, hoe de build geverifieerd wordt en wie een
-release goedkeurt — staat in [docs/code-signing-policy.md](code-signing-policy.md). De rollen en
-hun leden staan in de [README](../README.md#code-signing-policy).
+Er zit **geen handtekening** op deze bestanden: `Get-AuthenticodeSignature` meldt *NotSigned*. Het
+beleid dat geldt zodra dat wel zo is — wat er ondertekend wordt, hoe de build geverifieerd wordt en
+wie een release goedkeurt — staat in [docs/code-signing-policy.md](code-signing-policy.md). De rollen
+en hun leden staan in de [README](../README.md#code-signing-policy).
 
 ## Privacy
 
@@ -67,6 +67,6 @@ zichzelf maakt is de updatecontrole bij GitHub Releases. Wat er precies waar sta
 
 ## Licentie
 
-Helder is vrije software onder de [GNU AGPL-3.0](../LICENSE); de volledige broncode staat in deze
+Helder is vrije software onder de [GNU GPL-3.0](../LICENSE); de volledige broncode staat in deze
 repository. De licentietekst wordt meegeleverd in de installatiemap en is in de app te openen via
-**Help → Licentie (AGPL-3.0)**.
+**Help → Licentie (GPL-3.0)**.

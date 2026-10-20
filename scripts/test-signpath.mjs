@@ -1,9 +1,9 @@
 // Helder — boekhouden zonder ruis
 // Copyright (C) 2026 Helder-auteurs
-// SPDX-License-Identifier: AGPL-3.0-only
+// SPDX-License-Identifier: GPL-3.0-only
 //
 // Dit bestand is vrije software: je mag het verspreiden en/of aanpassen onder de
-// voorwaarden van de GNU Affero General Public License, versie 3. Zie LICENSE.
+// voorwaarden van de GNU General Public License, versie 3. Zie LICENSE.
 
 // Bewaakt de ondertekeningsstappen in de release-workflow. Die stappen zijn nooit te testen zonder
 // een SignPath-account, dus de fouten die je anders pas bij de eerste echte release ziet, worden
@@ -17,6 +17,9 @@
 // - de ondertekende bestanden worden teruggekopieerd, met een controle dat Helder.exe en de
 //   installer er echt zijn, zodat er nooit stil een ongetekende versie wordt gepubliceerd;
 // - de blockmap van de ongetekende installer gaat niet mee de release in;
+// - de uitgever komt uit de repository-variabele en niet uit dit bestand: sinds de aanvraag bij de
+//   Foundation is afgewezen, is een betaald abonnement met een eigen certificaat de enige route,
+//   en dan is de naam op dat certificaat de uitgever;
 // - de CI draait deze controle ook echt.
 //
 //   node scripts/test-signpath.mjs
@@ -120,7 +123,25 @@ assert.ok(
   "de blockmap staat niet in de lijst met release-assets"
 );
 
-// 7. En de CI moet deze controle draaien, anders is het een script dat niemand start.
+// 7. De uitgever staat niet vast in de workflow. Zou "SignPath Foundation" er nog in staan, dan
+//    belandt die naam in app-update.yml terwijl het certificaat van een eigen abonnement anders
+//    heet — en dan keurt electron-updater elke volgende update af.
+assert.ok(
+  !workflow.includes("HELDER_SIGN_PUBLISHER=SignPath Foundation"),
+  "de workflow zet geen vaste uitgeversnaam in app-update.yml"
+);
+assert.match(
+  workflow,
+  /vars\.HELDER_SIGN_PUBLISHER/,
+  "de workflow leest de uitgever uit de repository-variabele HELDER_SIGN_PUBLISHER"
+);
+assert.match(
+  workflow,
+  /::error title=Uitgever ontbreekt::/,
+  "ontbreekt die variabele terwijl er wel een token is, dan stopt de workflow met uitleg"
+);
+
+// 8. En de CI moet deze controle draaien, anders is het een script dat niemand start.
 const ciWorkflow = lees(".github/workflows/ci.yml");
 assert.match(ciWorkflow, /run: npm run test:signpath/, "de CI-workflow draait npm run test:signpath");
 

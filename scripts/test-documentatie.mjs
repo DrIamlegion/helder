@@ -1,22 +1,25 @@
 // Helder — boekhouden zonder ruis
 // Copyright (C) 2026 Helder-auteurs
-// SPDX-License-Identifier: AGPL-3.0-only
+// SPDX-License-Identifier: GPL-3.0-only
 //
 // Dit bestand is vrije software: je mag het verspreiden en/of aanpassen onder de
-// voorwaarden van de GNU Affero General Public License, versie 3. Zie LICENSE.
+// voorwaarden van de GNU General Public License, versie 3. Zie LICENSE.
 
-// Bewaakt de documentatie die SignPath Foundation van een deelnemer vraagt. Die eisen staan in
-// tekst, niet in code: een opruimactie in de README kan de regel van de Foundation of de
-// teamrollen laten verdwijnen zonder dat er iets kapotgaat — tot de aanvraag opnieuw wordt
-// beoordeeld. Deze controle laat de CI dan rood worden.
+// Bewaakt wat de documentatie over ondertekening zegt. Die afspraken staan in tekst, niet in code:
+// een opruimactie of een goedgevulde README kan een claim achterlaten die niet meer klopt, zonder
+// dat er iets kapotgaat. Deze controle laat de CI dan rood worden.
 //
 // Wat er gecontroleerd wordt:
-// - de letterlijke regel van de Foundation op de homepage (README) en de downloadpagina;
-// - een kop met de term "Code signing policy" op beide;
+// - dat nergens de regel staat die bij deelname aan het SignPath Foundation-programma hoort. Die
+//   aanvraag is op 20 oktober 2026 afgewezen; de regel zou dus een handtekening claimen die er
+//   niet is. Komt er weer een goedgekeurde aanvraag of een abonnement, pas dan deze controle aan;
+// - dat README, downloadpagina en beleid zeggen dat de releases niet ondertekend zijn;
+// - een kop met de term "Code signing policy" op de homepage en de downloadpagina;
 // - de drie rollen (committers, reviewers, approvers) met een lid erbij, en de MFA-eis;
 // - dat de homepage, de downloadpagina en het beleid naar elkaar en naar het privacybeleid
 //   linken, en dat al die relatieve links en ankers echt bestaan;
-// - dat de vaste voet onder de releasepagina's dezelfde regel en links bevat;
+// - dat de vaste voet onder de releasepagina's geen handtekening claimt en wel naar het beleid en
+//   de downloadpagina linkt;
 // - dat de CI-workflow deze controle ook echt draait.
 //
 //   node scripts/test-documentatie.mjs
@@ -28,8 +31,13 @@ import { fileURLToPath } from "node:url";
 const wortel = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const lees = (relatief) => readFileSync(path.join(wortel, relatief), "utf8").replace(/\r\n/g, "\n");
 
-/** De regel die de Foundation letterlijk op de homepage en de downloadpagina wil zien. */
-const REGEL = "Free code signing provided by SignPath.io, certificate by SignPath Foundation.";
+/**
+ * De regel die hoort bij deelname aan het SignPath Foundation-programma. Helder is geen deelnemer:
+ * de aanvraag is op 20 oktober 2026 afgewezen omdat het project nog te onbekend was. Zolang dat zo
+ * is, mag deze claim nergens staan — en staat er in plaats daarvan dat de releases ongetekend zijn.
+ */
+const FOUNDATION_REGEL = "Free code signing provided by SignPath.io, certificate by SignPath Foundation.";
+const ONGETEKEND = /niet ondertekend/;
 
 const readme = lees("README.md");
 const download = lees("docs/download.md");
@@ -45,23 +53,28 @@ const koppen = (tekst) =>
 
 const heeftKop = (tekst, titel) => koppen(tekst).some((kop) => kop.toLowerCase() === titel.toLowerCase());
 
-// 1. De letterlijke regel, als citaat, op de homepage en op de downloadpagina. Los in de tekst is
-//    niet genoeg: de Foundation wil hem als statement kunnen aanwijzen.
+// 1. Geen claim dat de Foundation ondertekent: dat is precies wat er niet meer waar is. En dus
+//    moet er staan wat er wél geldt, op alle drie de plekken waar een gebruiker kijkt.
 for (const [naam, tekst] of [
   ["README.md", readme],
   ["docs/download.md", download],
   ["docs/code-signing-policy.md", beleid],
 ]) {
   assert.ok(
-    tekst.split("\n").some((regel) => regel.trim() === `> ${REGEL}`),
-    `${naam} noemt de regel van de Foundation als citaat: "${REGEL}"`
+    !tekst.includes(FOUNDATION_REGEL),
+    `${naam} claimt geen handtekening van de SignPath Foundation: daarvoor is een goedgekeurde aanvraag of abonnement nodig, en die is er niet`
   );
+  assert.match(tekst, ONGETEKEND, `${naam} zegt dat de releases niet ondertekend zijn`);
 }
+assert.ok(
+  !lees("scripts/release-body.mjs").includes(FOUNDATION_REGEL),
+  "de voet onder de releasepagina's claimt geen handtekening van de Foundation"
+);
 
 // 2. De term die de voorwaarden voorschrijven, als kop op de homepage en de downloadpagina.
 assert.ok(
   heeftKop(readme, "Code signing policy"),
-  "README.md heeft een kop \"Code signing policy\" (die term schrijft de Foundation voor)"
+  "README.md heeft een kop \"Code signing policy\""
 );
 assert.ok(
   heeftKop(download, "Code signing policy"),
@@ -108,10 +121,16 @@ assert.match(privacy, /localStorage|%APPDATA%/, "het privacybeleid noemt waar de
 assert.match(privacy, /GitHub/, "het privacybeleid noemt de updatecontrole bij GitHub");
 assert.match(privacy, /telemetrie/i, "het privacybeleid zegt dat er geen telemetrie is");
 
-// 6. De vaste voet onder de releasepagina's (scripts/release-body.mjs) bevat dezelfde regel en de
-//   zelfde twee links; de releasepagina's zijn volgens de voorwaarden ook een plek waar dit hoort.
+// 6. De vaste voet onder de releasepagina's (scripts/release-body.mjs) noemt het beleid en de
+//   downloadpagina, en zegt per release of er ondertekend is. Zonder die statusregel leest een
+//   bezoeker van een ongetekende release niets over de waarschuwing van Windows.
 const voet = lees("scripts/release-body.mjs");
-assert.ok(voet.includes(REGEL), "scripts/release-body.mjs zet de regel van de Foundation onder de release");
+assert.ok(voet.includes("Code signing policy"), "scripts/release-body.mjs houdt de kop Code signing policy");
+assert.match(
+  voet,
+  /niet ondertekend/,
+  "scripts/release-body.mjs zegt het eerlijk als een release niet ondertekend is"
+);
 assert.ok(voet.includes("docs/code-signing-policy.md"), "de releasevoet linkt naar het ondertekeningsbeleid");
 assert.ok(voet.includes("docs/download.md"), "de releasevoet linkt naar de downloadpagina");
 

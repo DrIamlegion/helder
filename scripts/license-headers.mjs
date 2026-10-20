@@ -1,11 +1,11 @@
 // Helder — boekhouden zonder ruis
 // Copyright (C) 2026 Helder-auteurs
-// SPDX-License-Identifier: AGPL-3.0-only
+// SPDX-License-Identifier: GPL-3.0-only
 //
 // Dit bestand is vrije software: je mag het verspreiden en/of aanpassen onder de
-// voorwaarden van de GNU Affero General Public License, versie 3. Zie LICENSE.
+// voorwaarden van de GNU General Public License, versie 3. Zie LICENSE.
 
-// Zet de AGPL-licentieheader boven elk bronbestand, of controleert of hij er staat.
+// Zet de GPL-licentieheader boven elk bronbestand, of controleert of hij er staat.
 //
 //   node scripts/license-headers.mjs           → header toevoegen waar hij ontbreekt
 //   node scripts/license-headers.mjs --check   → exitcode 1 als er een header ontbreekt
@@ -19,10 +19,10 @@ const controle = process.argv.includes("--check");
 const REGELS = [
   "Helder — boekhouden zonder ruis",
   "Copyright (C) 2026 Helder-auteurs",
-  "SPDX-License-Identifier: AGPL-3.0-only",
+  "SPDX-License-Identifier: GPL-3.0-only",
   "",
   "Dit bestand is vrije software: je mag het verspreiden en/of aanpassen onder de",
-  "voorwaarden van de GNU Affero General Public License, versie 3. Zie LICENSE.",
+  "voorwaarden van de GNU General Public License, versie 3. Zie LICENSE.",
 ];
 
 const SOORTEN = {
@@ -86,12 +86,12 @@ for (const bestand of bestanden) {
 
 if (controle) {
   if (ontbreekt.length > 0) {
-    console.error(`Deze bestanden missen de AGPL-header (${ontbreekt.length}):`);
+    console.error(`Deze bestanden missen de GPL-header (${ontbreekt.length}):`);
     for (const bestand of ontbreekt) console.error(`- ${bestand}`);
     console.error("\nVoeg ze toe met: npm run license:add");
     process.exit(1);
   }
-  console.log(`Alle ${bestanden.length} bronbestanden hebben de AGPL-header.`);
+  console.log(`Alle ${bestanden.length} bronbestanden hebben de GPL-header.`);
   process.exit(0);
 }
 

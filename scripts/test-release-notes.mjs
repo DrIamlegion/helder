@@ -1,9 +1,9 @@
 // Helder — boekhouden zonder ruis
 // Copyright (C) 2026 Helder-auteurs
-// SPDX-License-Identifier: AGPL-3.0-only
+// SPDX-License-Identifier: GPL-3.0-only
 //
 // Dit bestand is vrije software: je mag het verspreiden en/of aanpassen onder de
-// voorwaarden van de GNU Affero General Public License, versie 3. Zie LICENSE.
+// voorwaarden van de GNU General Public License, versie 3. Zie LICENSE.
 
 // Controleert dat de release-opmerkingen in latest.yml de volledige punten uit CHANGELOG.md
 // bevatten, inclusief de uitloopregels. Zonder deze test zou de update-kaart alleen de eerste
@@ -132,13 +132,17 @@ assert.match(
   "de releasepagina linkt naar de volledige geschiedenis"
 );
 
-// De vaste voet: SignPath Foundation vraagt dat ook de releasepagina's de regel van de
-// Foundation noemen en naar het beleid en de downloadpagina wijzen. Ontbreekt die voet, dan
-// voldoet de releasepagina niet aan de voorwaarden, ook al staat de homepage goed.
+// De vaste voet: een kop **Code signing policy** met de links naar het beleid en de downloadpagina,
+// en daaronder de status van dít bestand. Ontbreekt die voet, dan leest een bezoeker van de
+// releasepagina niets over de waarschuwing van Windows.
 assert.match(
   body,
-  /\*\*Code signing policy\*\* — Free code signing provided by SignPath\.io, certificate by SignPath Foundation\./,
-  "de releasepagina noemt de regel van de Foundation"
+  /\*\*Code signing policy\*\* — \[Ondertekeningsbeleid\]\(https:\/\/github\.com\/DrIamlegion\/helder\/blob\/main\/docs\/code-signing-policy\.md\)/,
+  "de releasepagina opent de voet met het ondertekeningsbeleid"
+);
+assert.ok(
+  !body.includes("Free code signing provided by SignPath.io"),
+  "de releasepagina claimt geen handtekening van de Foundation: die aanvraag is afgewezen"
 );
 assert.match(
   body,
@@ -152,19 +156,20 @@ assert.match(
 );
 
 // De statusregel moet kloppen: zonder SignPath-secrets bouwt de workflow ongetekend, en dan mag
-// de pagina niet doen alsof er een handtekening op staat.
+// de pagina niet doen alsof er een handtekening op staat. En met een handtekening noemt hij de
+// naam van het certificaat, niet die van een ondertekenaar die er niet meer is.
 assert.match(
   bodyVoor(versie, { ondertekend: false }),
-  /Deze versie is nog niet ondertekend; Windows kan bij de eerste start waarschuwen\./,
+  /Deze versie is niet ondertekend; Windows kan bij de eerste start waarschuwen\./,
   "een ongetekende release zegt dat eerlijk op de releasepagina"
 );
 assert.match(
-  bodyVoor(versie, { ondertekend: true }),
-  /Deze versie is ondertekend met het certificaat van SignPath Foundation\./,
-  "een ondertekende release noemt de ondertekenaar"
+  bodyVoor(versie, { uitgever: "Voorbeeld Certificaat B.V." }),
+  /Deze versie is ondertekend met het certificaat van Voorbeeld Certificaat B\.V\.; Windows toont die naam als uitgever\./,
+  "een ondertekende release noemt de uitgever van het certificaat"
 );
 assert.ok(
-  !/is ondertekend met het certificaat/.test(bodyVoor(versie, { ondertekend: false })),
+  !/is ondertekend/.test(bodyVoor(versie, { ondertekend: false })),
   "de ongetekende variant claimt geen handtekening"
 );
 

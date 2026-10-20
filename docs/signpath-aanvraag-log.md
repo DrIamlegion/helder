@@ -1,9 +1,10 @@
 # SignPath-aanvraag: wat er verstuurd is
 
 Het invulblad [signpath-aanvraag.md](signpath-aanvraag.md) verandert mee met het project: er komen
-releases bij, links worden anders, de reputatietekst groeit. Dit bestand verandert niet. Hier staat
-per poging wat er op dat moment werkelijk in het formulier stond, zodat een tweede aanvraag kan
-aantonen wat er sinds de vorige is veranderd in plaats van hetzelfde verhaal nog eens te vertellen.
+releases bij, links worden anders, de reputatietekst groeit. Dit bestand niet: hier staat per poging
+wat er op dat moment werkelijk in het formulier stond en wat er op terugkwam, zodat een tweede
+aanvraag kan aantonen wat er sinds de vorige is veranderd in plaats van hetzelfde verhaal nog eens te
+vertellen.
 
 Twee regels die dit bestand nuttig houden:
 
@@ -16,7 +17,7 @@ Twee regels die dit bestand nuttig houden:
 
 | # | Datum | Versie | Status | Uitkomst |
 | --- | --- | --- | --- | --- |
-| 1 | 19 oktober 2026 | 0.1.11 | ingediend, bevestigd per e-mail | antwoord binnen enkele werkdagen |
+| 1 | 19 oktober 2026 | 0.1.11 | ingediend, bevestigd per e-mail | **afgewezen** op 20 oktober 2026: te weinig publieke bekendheid |
 
 ## Poging 1 — 19 oktober 2026
 
@@ -75,24 +76,73 @@ What can be verified today:
 I want to be straightforward about the limits: there is no press coverage, no community discussion and no meaningful download record yet, and the project has a single maintainer. If verifiable reputation is a hard requirement, I would rather withdraw and apply again once the project has that history than have the Foundation vouch for software that nobody knows yet.
 ```
 
-## Na het versturen
+## Uitkomst poging 1 — 20 oktober 2026
 
-De aanvraag ligt bij de Foundation. De bevestiging noemt *"the next few business days"*; is er rond
-26 oktober 2026 nog niets, dan is één korte navraag in dezelfde e-mailthread redelijk — één, niet
-meer. Komt er bericht, dan is dat het moment om verder te gaan: bij goedkeuring volgt een
-uitnodiging voor het SignPath-portaal en begint de inrichting uit
-[README → De aanvraag in stappen](../README.md#de-aanvraag-in-stappen) — project `helder`, signing
-policy `release-signing`, de twee artifact configurations, daarna `SIGNPATH_API_TOKEN` en
-`SIGNPATH_ORGANIZATION_ID` als Actions-secrets, en een nieuwe tag.
+Op 20 oktober 2026 om 08:10 kwam het antwoord van Phillip Deng (SignPath Foundation) in dezelfde
+e-mailthread. De kern, letterlijk:
 
-Stuur in de tussentijd geen tweede aanvraag en geen reeks herinneringen, en ga niet in discussie
-over de uitkomst: de voorwaarden vragen daar expliciet om (*"Please don't argue with us"*). Wat wel
-helpt is het enige dat de Foundation zelf kan controleren — releases blijven uitbrengen en
-`npm run signalen` laten lopen, zodat er cijfers met data liggen als er een tweede poging nodig is.
+> After reviewing your submission, we're unable to approve your application at this time.
+
+De reden is niet de kwaliteit van het project maar het ontbreken van signalen van buitenaf:
+
+> The Foundation program is designed for projects that have already established a certain level of
+> public trust and visibility, so when evaluating applications we look for external signals such as
+> community adoption (GitHub stars, forks, contributors), external articles, independent references
+> or discussions (Reddit, Stack Overflow, YouTube, etc.) or institutional backing, and evidence of
+> sustained activity and engagement.
+
+> At the moment your project doesn't yet show enough of these signals for us to issue a Foundation
+> certificate in our name. This isn't a judgment on the quality or potential of your work, it's
+> purely about the level of public visibility the Foundation program requires.
+
+De brief zegt ook dat een nieuwe aanvraag welkom is zodra het project breder bekend is, en wijst op
+een betaald abonnement als het sneller moet:
+
+> We'd genuinely encourage you to keep developing the project, and you're very welcome to reapply
+> once it has gained broader recognition, we'd be happy to review it again.
+>
+> If you'd like to move forward sooner, you can also use SignPath through a regular paid
+> subscription instead of the Foundation program: <https://docs.signpath.io/change-subscription>
+
+Dat is precies de afweging die in [signpath-aanvraag.md → Verwachting](signpath-aanvraag.md#verwachting)
+vooraf is opgeschreven: optie 2 (nu aanvragen) met de wetenschap dat het reputatieveld de zwakke
+plek is. De uitkomst bevestigt dat; er is niets misgegaan in het formulier, de velden klopten.
+
+Op deze brief is niet geantwoord. De voorwaarden vragen om geen discussie over de uitkomst
+(*"Please don't argue with us"*), en er valt ook niets te betwisten: de cijfers in de aanvraag zijn
+eerlijk en de conclusie volgt daaruit.
+
+## Wat dat betekent
+
+De gratis route via de Foundation is voorlopig dicht. Er zijn drie dingen die je kunt doen, in
+volgorde van wat het minst kost:
+
+1. **Ongetekend blijven publiceren.** Releases werken, `latest.yml` klopt, de updatecontrole werkt;
+   alleen toont Windows bij de eerste start "onbekende uitgever". Dat is de stand van nu, en de
+documentatie zegt het ook zo.
+2. **Opnieuw aanvragen bij de Foundation** zodra de signalen er zijn. De brief noemt dat expliciet
+   als mogelijkheid. Wat er dan bij moet zijn staat hieronder bij *Bij een volgende poging*; de
+   cijfers komen uit `npm run signalen`, niet uit een schatting.
+3. **Een betaald SignPath-abonnement** als het niet kan wachten. Zelfde product, zelfde
+   GitHub-actie, ander certificaat: dat staat op naam van je eigen organisatie in plaats van op die
+   van de Foundation. De pijplijn in deze repository werkt daar ongewijzigd mee, maar de uitgever in
+   `app-update.yml` moet dan de naam van dát certificaat zijn — vandaar dat de workflow hem uit de
+   variabele `HELDER_SIGN_PUBLISHER` leest en niet langer de naam van de Foundation vastzet.
+
+Wat in geen geval gebeurt: de documentatie laten staan alsof er ondertekend wordt. De regel *"Free
+code signing provided by SignPath.io, certificate by SignPath Foundation"* hoort bij deelname aan
+het Foundation-programma en is daarom uit de README, de downloadpagina, het beleid en de releasevoet
+verdwenen. `npm run test:documentatie` laat de CI rood worden als iemand hem terugzet zonder dat er
+weer een goedgekeurde aanvraag is.
+
+Stuur geen tweede aanvraag en geen reeks herinneringen, en ga niet in discussie over de uitkomst.
+Wat wel helpt is het enige dat de Foundation zelf kan controleren — releases blijven uitbrengen en
+`npm run signalen` laten lopen, zodat er cijfers met data liggen als er een tweede poging komt.
 
 ## Bij een volgende poging
 
-Begin niet bij het formulier maar bij deze tabel: welke signalen zijn er sinds de vorige poging
+De eerste poging is afgewezen op het reputatieveld, dus begin niet bij het formulier maar bij deze
+tabel: welke signalen zijn er sinds de vorige poging
 écht bijgekomen? Alleen wat controleerbaar is telt — een download-teller, sterren, een draadje
 waar het project genoemd wordt, een issue of pull request van iemand anders, een vermelding buiten
 de repository. Verzin niets bij: de Foundation leest de repository en een overdreven claim is op

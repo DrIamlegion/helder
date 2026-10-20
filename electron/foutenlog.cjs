@@ -1,9 +1,9 @@
 // Helder — boekhouden zonder ruis
 // Copyright (C) 2026 Helder-auteurs
-// SPDX-License-Identifier: AGPL-3.0-only
+// SPDX-License-Identifier: GPL-3.0-only
 //
 // Dit bestand is vrije software: je mag het verspreiden en/of aanpassen onder de
-// voorwaarden van de GNU Affero General Public License, versie 3. Zie LICENSE.
+// voorwaarden van de GNU General Public License, versie 3. Zie LICENSE.
 
 // Het foutenlogboek: een onverwachte fout in het hoofdproces komt in fouten.log te staan, in de
 // gegevensmap naast de administratie. Zonder dat spoor kan een gebruiker alleen zeggen "hij deed

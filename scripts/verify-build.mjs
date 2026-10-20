@@ -1,9 +1,9 @@
 // Helder — boekhouden zonder ruis
 // Copyright (C) 2026 Helder-auteurs
-// SPDX-License-Identifier: AGPL-3.0-only
+// SPDX-License-Identifier: GPL-3.0-only
 //
 // Dit bestand is vrije software: je mag het verspreiden en/of aanpassen onder de
-// voorwaarden van de GNU Affero General Public License, versie 3. Zie LICENSE.
+// voorwaarden van de GNU General Public License, versie 3. Zie LICENSE.
 
 // Controleert of de gebouwde app-map (en de installer) precies bij deze commit hoort.
 //
@@ -20,7 +20,7 @@
 //      naam, versie, main en licentie in de meegebouwde package.json zijn dezelfde;
 //   3. elk bestand in app.asar onder dist/ is gelijk aan de verse build in dist/ — dus de asar
 //      bevat precies de frontend die deze bouw opleverde;
-//   4. resources/LICENSE is gelijk aan LICENSE in HEAD (AGPL-verplichting);
+//   4. resources/LICENSE is gelijk aan LICENSE in HEAD (GPL-verplichting);
 //   5. de versie in package.json, in de asar en in de tag is dezelfde; met --installer ook dat
 //      de installer van die versie bestaat en latest.yml hem noemt.
 //

@@ -1,9 +1,9 @@
 // Helder — boekhouden zonder ruis
 // Copyright (C) 2026 Helder-auteurs
-// SPDX-License-Identifier: AGPL-3.0-only
+// SPDX-License-Identifier: GPL-3.0-only
 //
 // Dit bestand is vrije software: je mag het verspreiden en/of aanpassen onder de
-// voorwaarden van de GNU Affero General Public License, versie 3. Zie LICENSE.
+// voorwaarden van de GNU General Public License, versie 3. Zie LICENSE.
 
 // Controleert dat het updatekanaal echt naar de releases van deze repository wijst.
 //
@@ -61,24 +61,35 @@ assert.match(
 //    vergelijkt de naam van de ondertekenaar met dat veld en weigert een update die niet klopt.
 const metUitgever = regelsVoorAppUpdate({
   ...config,
-  win: { ...config.win, publisherName: "SignPath Foundation" },
+  win: { ...config.win, publisherName: "Voorbeeld Certificaat B.V." },
 });
 assert.ok(
-  metUitgever.includes("publisherName: SignPath Foundation"),
+  metUitgever.includes("publisherName: Voorbeeld Certificaat B.V."),
   "app-update.yml noemt de uitgever zodra die in de configuratie staat"
 );
 
-// 5. En de workflow moet precies die naam zetten — maar alleen als er echt ondertekend wordt.
-//    Staat hij er ook zonder SignPath-secrets in, dan keurt een ongetekende update zichzelf af.
+// 5. En de workflow moet die naam uit de repository-variabele halen — maar alleen als er echt
+//    ondertekend wordt. Staat er ook zonder SignPath-secrets een uitgever in, dan keurt een
+//    ongetekende update zichzelf af; staat er een vaste naam in terwijl het certificaat anders
+//    heet, dan keurt de ondertekende update zichzelf af. Daarom geen naam in de workflow zelf.
 assert.match(
   workflow,
-  /if \[\[ -n "\$SIGNPATH_API_TOKEN" \]\][\s\S]{0,200}HELDER_SIGN_PUBLISHER=SignPath Foundation/,
-  "de release-workflow zet de uitgever alleen als de SignPath-secrets er zijn"
+  /if \[\[ -z "\$SIGNPATH_API_TOKEN" \]\][\s\S]*?exit 0[\s\S]*?vars\.HELDER_SIGN_PUBLISHER/,
+  "de release-workflow zet de uitgever alleen als de SignPath-secrets er zijn, en leest hem uit de variabele"
+);
+assert.match(
+  workflow,
+  /echo "HELDER_SIGN_PUBLISHER=\$uitgever" >> "\$GITHUB_ENV"/,
+  "de workflow geeft de uitgever aan de volgende stappen mee"
+);
+assert.ok(
+  !/HELDER_SIGN_PUBLISHER=SignPath Foundation/.test(workflow),
+  "de workflow zet geen vaste uitgeversnaam meer: die hangt af van het certificaat"
 );
 
 console.log(
   `Updatekanaal: github.com/${velden.owner}/${velden.repo}, latest.yml gaat mee met de release.`
 );
 console.log(
-  "Ondertekening: zodra er ondertekend wordt, staat SignPath Foundation als uitgever in app-update.yml."
+  "Ondertekening: de uitgever komt uit HELDER_SIGN_PUBLISHER, alleen als er echt ondertekend wordt."
 );

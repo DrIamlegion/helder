@@ -1,9 +1,9 @@
 // Helder — boekhouden zonder ruis
 // Copyright (C) 2026 Helder-auteurs
-// SPDX-License-Identifier: AGPL-3.0-only
+// SPDX-License-Identifier: GPL-3.0-only
 //
 // Dit bestand is vrije software: je mag het verspreiden en/of aanpassen onder de
-// voorwaarden van de GNU Affero General Public License, versie 3. Zie LICENSE.
+// voorwaarden van de GNU General Public License, versie 3. Zie LICENSE.
 
 // Bouwconfiguratie voor de desktop-app. Alles wat electron-builder nodig heeft staat hier;
 // package.json heeft bewust géén `build`-veld, want dan zou dit bestand genegeerd worden.
@@ -73,7 +73,7 @@ module.exports = {
   },
   electronDist: "node_modules/electron/dist",
   files: ["electron/**/*", "dist/**/*", "package.json"],
-  // Helder is AGPL-3.0: de licentietekst gaat mee de installatiemap in, zodat elke
+  // Helder is GPL-3.0: de licentietekst gaat mee de installatiemap in, zodat elke
   // gebruiker hem kan lezen (Help → Licentie opent dit bestand).
   extraResources: ["LICENSE"],
   // Het updatekanaal zijn de releases van deze repository. De release-workflow zet bij elke

@@ -5,10 +5,10 @@ het formulier zoals het op 19 oktober 2026 live stond (HubSpot-formulier
 `bf62807d-bb72-4e45-9bde-1f3a53ba2472`), inclusief de keuzelijsten. De antwoorden staan in het
 Engels omdat het formulier Engels is; de rest van dit document is Nederlands.
 
-**De aanvraag is op 19 oktober 2026 verstuurd**; wat er werkelijk in het formulier stond staat in
-[signpath-aanvraag-log.md](signpath-aanvraag-log.md). De afweging in [Verwachting](#verwachting)
-blijft staan, want die is weer actueel zodra de Foundation nee zegt of om meer informatie vraagt —
-dan is de eerste optie hieronder het antwoord.
+**De aanvraag is op 19 oktober 2026 verstuurd en op 20 oktober 2026 afgewezen**; wat er werkelijk in
+het formulier stond én wat er terugkwam staat in [signpath-aanvraag-log.md](signpath-aanvraag-log.md).
+Dit blad blijft het invulblad voor een volgende poging: de velden zijn ongewijzigd, en de afweging in
+[Verwachting](#verwachting) staat er nu met de uitkomst bij.
 
 Wat er bij een eerdere poging werkelijk is verstuurd — en hoe de repository er toen voor stond —
 staat in [signpath-aanvraag-log.md](signpath-aanvraag-log.md). Dit blad verandert mee met het
@@ -43,9 +43,13 @@ repository wordt afgewezen. Twee eerlijke opties:
    heeft in plaats van te discussiëren over het beleid (de voorwaarden vragen daar ook om:
    *"Please don't argue with us"*).
 
-Er is voor de tweede optie gekozen: de aanvraag is op 19 oktober 2026 verstuurd. Wijst de Foundation
-hem af, dan is de eerste optie het antwoord, met [signpath-signalen.json](signpath-signalen.json) als
-bewijs dat het project sindsdien gegroeid is.
+Er is voor de tweede optie gekozen: de aanvraag is op 19 oktober 2026 verstuurd. Op 20 oktober 2026
+kwam de afwijzing, met precies de reden die hierboven voorspeld is: *"your project doesn't yet show
+enough of these signals … it's purely about the level of public visibility the Foundation program
+requires"*, plus de uitnodiging om terug te komen zodra het project breder bekend is. Daarmee is de
+eerste optie het antwoord, met [signpath-signalen.json](signpath-signalen.json) als bewijs dat het
+project sindsdien gegroeid is. De volledige brief staat in
+[signpath-aanvraag-log.md](signpath-aanvraag-log.md#uitkomst-poging-1-20-oktober-2026).
 
 Wat je hoeft te doen voordat je op *Submit* drukt, staat in [Vooraf](#vooraf).
 
@@ -58,7 +62,7 @@ de repo-instellingen) blijven open tot je ze hebt nagelopen.
 - [x] **Deze documenten staan op GitHub** — de URL's in dit blad wijzen naar de branch `main`;
       commit en push ze voordat je het formulier verstuurt, anders krijgt de Foundation een 404.
 - [x] **Repository openbaar** — <https://github.com/DrIamlegion/helder> is openbaar.
-- [x] **Eén OSI-licentie voor alle componenten** — AGPL-3.0, `"license": "AGPL-3.0-only"`, elke
+- [x] **Eén OSI-licentie voor alle componenten** — GPL-3.0, `"license": "GPL-3.0-only"`, elke
       bronfile met een SPDX-header (`npm run license:check`).
 - [x] **Released in de vorm die ondertekend wordt** — de NSIS-installer bestaat en is
       downloadbaar: <https://github.com/DrIamlegion/helder/releases>
@@ -76,7 +80,7 @@ de repo-instellingen) blijven open tot je ze hebt nagelopen.
       beoordeeld; elke tag wordt door hem goedgekeurd.
 - [ ] **Repo-instellingen**: zet onder *About* de homepage op
       `https://github.com/DrIamlegion/helder` en voeg de onderwerpen `boekhouding`, `facturen`,
-      `electron`, `agpl` toe. Dat maakt de repository vindbaar — wat weer helpt bij de volgende
+      `electron`, `gpl` toe. Dat maakt de repository vindbaar — wat weer helpt bij de volgende
       aanvraag.
 
 ## De velden
@@ -110,10 +114,12 @@ the repository page"). Heb je later een eigen domein, gebruik dat dan.
 https://github.com/DrIamlegion/helder/blob/main/docs/download.md
 ```
 
-Deze pagina moet volgens het formulier *"mention that the project uses the SignPath Foundation
-for code signing"*; [download.md](download.md) doet dat, en de README linkt er vanaf de
-homepage naar. Elke releasepagina krijgt dezelfde regel automatisch onderaan de release-opmerkingen
-(`scripts/release-body.mjs`), met een link naar de downloadpagina.
+Het formulier vraagt dat deze pagina zegt dat het project de SignPath Foundation gebruikt voor
+ondertekening. Zolang er geen goedgekeurde aanvraag of abonnement is, staat er het tegenovergestelde:
+[download.md](download.md) zegt eerlijk dat de installers **niet ondertekend** zijn, en waarom. Komt
+ondertekening er wel, zet die regel er dan bij — in de README, op de downloadpagina en in de voet van
+`scripts/release-body.mjs` — en pas `npm run test:documentatie` aan, dat nu juist bewaakt dat de claim
+er niet staat.
 
 ### Privacy Policy URL
 
@@ -153,8 +159,9 @@ Helder is a Windows desktop application for bookkeeping by Dutch freelancers and
 
 ### Reputation
 
-Dit is het veld dat over de aanvraag beslist. Hieronder de eerlijke versie: geen verzonnen
-gebruikers, geen opgeblazen cijfers.
+Dit is het veld dat over de aanvraag beslist — en bij poging 1 ook beslist heeft. Hieronder eerst de
+eerlijke tekst zoals die op 19 oktober 2026 verstuurd is (geen verzonnen gebruikers, geen opgeblazen
+cijfers), daarna wat een tweede poging anders moet zeggen.
 
 ```
 Helder is a new project. The repository became public on 18 October 2026 and the first release (v0.1.7) was published the same day; five tagged releases have followed, the latest v0.1.11.
@@ -168,9 +175,26 @@ What can be verified today:
 I want to be straightforward about the limits: there is no press coverage, no community discussion and no meaningful download record yet, and the project has a single maintainer. If verifiable reputation is a hard requirement, I would rather withdraw and apply again once the project has that history than have the Foundation vouch for software that nobody knows yet.
 ```
 
-Als er inmiddels wél signalen zijn (downloads, sterren, een draadje, een issue van iemand anders),
-vervang dan de laatste alinea door die concrete cijfers en links. Verzin niets: de Foundation
-controleert de repository, en een overdreven claim is een reden om af te wijzen.
+Dit is de tekst die op 19 oktober 2026 is verstuurd. Voor een tweede poging is de laatste alinea te
+zwak: die vraagt om uitstel in plaats van dat hij iets laat zien. Vervang hem door de follow-up
+tekst hieronder en vul elk streepje met iets dat je kunt openen.
+
+```
+The Foundation declined a first application for this project on 20 October 2026, when the repository was two days old, and encouraged me to reapply once the project had gained broader recognition. This is that follow-up.
+
+What is new since that answer, all verifiable:
+- ⟨X⟩ tagged releases, the latest v⟨versie⟩ (⟨datum⟩), each built and published by GitHub Actions from a tag in this repository.
+- ⟨X⟩ stars, ⟨X⟩ forks and ⟨X⟩ downloads of the installer.
+- ⟨issue/PR of iemand anders, met nummer en datum⟩
+- ⟨vermelding buiten GitHub: URL, datum en wat er staat⟩
+
+I am not going to overstate this: ⟨wat er nog steeds ontbreekt, in één zin⟩. If that is still not enough for a Foundation certificate, I would rather hear it again than have the Foundation vouch for software that nobody knows yet.
+```
+
+Verzin niets en laat een streepje weg in plaats van het op te vullen met iets vaags: de Foundation
+leest de repository en de links, en een overdreven claim is op zichzelf al een reden om af te wijzen.
+De cijfers komen uit `npm run signalen`, dat per dag één meting in
+[signpath-signalen.json](signpath-signalen.json) zet.
 
 ### Maintainer Type
 
@@ -224,6 +248,9 @@ waar je het las.
 
 ## Na goedkeuring
 
-De inrichting in SignPath staat in [README → De aanvraag in stappen](../README.md#de-aanvraag-in-stappen)
-en de workflow staat er al op: `SIGNPATH_API_TOKEN` en `SIGNPATH_ORGANIZATION_ID` als
-Actions-secrets, daarna een nieuwe tag. Zonder die secrets bouwt de workflow ongetekend door.
+Geldt zowel bij een nieuwe aanvraag die wél wordt goedgekeurd als bij een betaald abonnement: de
+inrichting in het portaal staat in [signpath-inrichting.md](signpath-inrichting.md), en de workflow
+staat er al op. Zet `SIGNPATH_API_TOKEN` en `SIGNPATH_ORGANIZATION_ID` als Actions-secrets en
+`HELDER_SIGN_PUBLISHER` als repository-variabele met de naam die precies op het certificaat staat —
+bij een eigen abonnement is dat je organisatie, niet de Foundation. Daarna een nieuwe tag. Zonder die
+secrets bouwt de workflow ongetekend door.

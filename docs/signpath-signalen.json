@@ -22,5 +22,29 @@
     "auteurs": 1,
     "eigenIdentiteit": "noreply@localhost",
     "auteursVanBuitenaf": 0
+  },
+  {
+    "opgenomen": "2026-10-20T14:36:49.902Z",
+    "repository": "DrIamlegion/helder",
+    "sterren": 0,
+    "forks": 0,
+    "kijkers": 0,
+    "licentie": "AGPL-3.0",
+    "repositorySinds": "2026-10-18T12:21:28Z",
+    "laatstePush": "2026-10-19T16:48:20Z",
+    "uitgaven": 5,
+    "proefversies": 0,
+    "eersteUitgave": "v0.1.7",
+    "laatsteUitgave": "v0.1.11",
+    "downloads": 14,
+    "issues": 0,
+    "issuesVanBuitenaf": 0,
+    "pullRequests": 0,
+    "pullRequestsVanBuitenaf": 0,
+    "openVanBuitenaf": 0,
+    "commits": 20,
+    "auteurs": 1,
+    "eigenIdentiteit": "noreply@localhost",
+    "auteursVanBuitenaf": 0
   }
 ]

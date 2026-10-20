@@ -1,9 +1,9 @@
 // Helder — boekhouden zonder ruis
 // Copyright (C) 2026 Helder-auteurs
-// SPDX-License-Identifier: AGPL-3.0-only
+// SPDX-License-Identifier: GPL-3.0-only
 //
 // Dit bestand is vrije software: je mag het verspreiden en/of aanpassen onder de
-// voorwaarden van de GNU Affero General Public License, versie 3. Zie LICENSE.
+// voorwaarden van de GNU General Public License, versie 3. Zie LICENSE.
 
 // Schrijft de beschrijving voor de GitHub-releasepagina, uit dezelfde punten als de
 // update-kaart in de app, met onderaan de vaste voet over het ondertekeningsbeleid. Zonder dit
@@ -24,28 +24,32 @@ const require = createRequire(import.meta.url);
 export const REPOSITORY = "DrIamlegion/helder";
 
 /**
- * De vaste voet onder elke releasepagina. SignPath Foundation vraagt dat de releasepagina's de
- * regel van de Foundation noemen en naar het ondertekeningsbeleid wijzen; de downloadpagina staat
- * erbij zodat een bezoeker meteen bij de installatie-instructies is.
+ * De vaste voet onder elke releasepagina: een kop **Code signing policy** met de links naar het
+ * beleid en de downloadpagina, en daaronder wat er met dít bestand gebeurd is.
  *
- * De statusregel komt uit `ondertekend`. De workflow zet `HELDER_SIGN_PUBLISHER` alleen als er
- * echt ondertekend wordt, dus zonder SignPath-secrets staat er eerlijk "nog niet ondertekend"
- * in plaats van een claim die niet klopt.
+ * De statusregel komt uit `uitgever`. De workflow zet `HELDER_SIGN_PUBLISHER` alleen als er echt
+ * ondertekend wordt, dus zonder SignPath-secrets staat er eerlijk "niet ondertekend" in plaats van
+ * een claim die niet klopt — en mét een handtekening staat de naam van het certificaat erbij in
+ * plaats van de naam van een ondertekenaar die er niet meer is.
  */
 export function beleidsvoet({
   repository = REPOSITORY,
-  ondertekend = Boolean(process.env.HELDER_SIGN_PUBLISHER),
+  uitgever = process.env.HELDER_SIGN_PUBLISHER,
+  ondertekend = Boolean(uitgever),
 } = {}) {
   return [
     "---",
     "",
-    "**Code signing policy** — Free code signing provided by SignPath.io, certificate by SignPath Foundation.",
-    `[Ondertekeningsbeleid](https://github.com/${repository}/blob/main/docs/code-signing-policy.md) · ` +
+    "**Code signing policy** — " +
+      `[Ondertekeningsbeleid](https://github.com/${repository}/blob/main/docs/code-signing-policy.md) · ` +
       `[Download en installatie](https://github.com/${repository}/blob/main/docs/download.md)`,
     "",
-    ondertekend
-      ? "Deze versie is ondertekend met het certificaat van SignPath Foundation."
-      : "Deze versie is nog niet ondertekend; Windows kan bij de eerste start waarschuwen.",
+    ondertekend && uitgever
+      ? `Deze versie is ondertekend met het certificaat van ${uitgever}; Windows toont die naam als uitgever.`
+      : ondertekend
+        ? "Deze versie is ondertekend; Windows toont de uitgever bij de eerste start."
+        : "Deze versie is niet ondertekend; Windows kan bij de eerste start waarschuwen. " +
+          "Zie het ondertekeningsbeleid voor wat daarvoor nodig is.",
     "",
   ].join("\n");
 }
@@ -54,7 +58,7 @@ export function beleidsvoet({
  * De tekst onder de release, opgebouwd uit de losse punten. GitHub toont dit als Markdown,
  * dus de punten worden een lijst en de opmaak uit CHANGELOG.md (`**vet**`, backticks) blijft werken.
  */
-export function releaseBody(versie, punten, { repository = REPOSITORY, ondertekend } = {}) {
+export function releaseBody(versie, punten, { repository = REPOSITORY, uitgever, ondertekend } = {}) {
   const lijst = punten.map((punt) => `- ${punt}`).join("\n");
   return [
     `## Wat is er nieuw in Helder ${versie}`,
@@ -64,16 +68,20 @@ export function releaseBody(versie, punten, { repository = REPOSITORY, onderteke
     `Volledige geschiedenis: [CHANGELOG.md](https://github.com/${repository}/blob/main/CHANGELOG.md) · ` +
       `[alle releases](https://github.com/${repository}/releases)`,
     "",
-    beleidsvoet({ repository, ...(ondertekend === undefined ? {} : { ondertekend }) }),
+    beleidsvoet({
+      repository,
+      ...(uitgever === undefined ? {} : { uitgever }),
+      ...(ondertekend === undefined ? {} : { ondertekend }),
+    }),
   ].join("\n");
 }
 
 /** De beschrijving voor één versie, of null als die versie geen sectie in CHANGELOG.md heeft. */
-export function bodyVoor(versie, { repository = REPOSITORY, ondertekend } = {}) {
+export function bodyVoor(versie, { repository = REPOSITORY, uitgever, ondertekend } = {}) {
   const { notitiesVoor } = require("./release-notes.cjs");
   const notities = notitiesVoor(versie);
   if (!notities) return null;
-  return releaseBody(versie, notities.split("\n"), { repository, ondertekend });
+  return releaseBody(versie, notities.split("\n"), { repository, uitgever, ondertekend });
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {

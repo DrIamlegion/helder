@@ -1,9 +1,9 @@
 {
   "name": "helder",
   "private": true,
-  "version": "0.1.11",
+  "version": "0.1.12",
   "description": "Boekhouden zonder ruis: facturen, uitgaven, bankzaken en btw-aangifte voor zzp en mkb.",
-  "license": "AGPL-3.0-only",
+  "license": "GPL-3.0-only",
   "author": "Helder",
   "type": "module",
   "main": "electron/main.cjs",

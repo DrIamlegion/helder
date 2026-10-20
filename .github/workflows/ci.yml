@@ -44,11 +44,12 @@ jobs:
       - name: Updatekanaal
         run: npm run test:update-kanaal
 
-      # De eisen van SignPath staan in tekst, niet in code: een opruimactie kan de regel van de
-      # Foundation, de teamrollen of de link naar het privacybeleid laten verdwijnen zonder dat
-      # er iets kapotgaat. Deze controle laat de pull request dan rood worden, en controleert
-      # meteen dat alle relatieve links en ankers in die documenten nog bestaan.
-      - name: Documentatie (SignPath)
+      # Wat de documentatie over ondertekening zegt staat in tekst, niet in code: een opruimactie kan
+      # een claim achterlaten die niet meer klopt, of juist de eerlijke status laten verdwijnen,
+      # zonder dat er iets kapotgaat. Deze controle laat de pull request dan rood worden — de regel
+      # van de SignPath Foundation mag er niet in staan zolang die aanvraag is afgewezen — en
+      # controleert meteen dat alle relatieve links en ankers in die documenten nog bestaan.
+      - name: Documentatie (ondertekening)
         run: npm run test:documentatie
 
       # De ondertekeningsstappen zijn zonder SignPath-account niet te draaien, dus controleert deze

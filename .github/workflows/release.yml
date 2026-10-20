@@ -4,11 +4,15 @@
 # echte app: een tag publiceert alleen als wizard, Instellingen, de facturen, de brief en het
 # btw-overzicht nog doen wat ze moeten doen.
 #
-# Ondertekening loopt via SignPath Foundation, dat open-sourcesoftware gratis ondertekent.
-# Zolang de secrets er niet zijn, bouwt de workflow gewoon ongetekend door — handig om de
-# pijplijn te testen voordat de SignPath-projecten zijn aangevraagd.
+# Ondertekening liep via de gratis route van SignPath Foundation; die aanvraag is op 20 oktober 2026
+# afgewezen omdat het project nog te weinig publieke bekendheid had (zie
+# docs/signpath-aanvraag-log.md). De stappen hieronder werken ongewijzigd met een betaald
+# SignPath-abonnement: zelfde actie, ander certificaat. Zolang de secrets er niet zijn, bouwt de
+# workflow gewoon ongetekend door.
 #
-# Secrets: SIGNPATH_API_TOKEN en SIGNPATH_ORGANIZATION_ID.
+# Secrets: SIGNPATH_API_TOKEN en SIGNPATH_ORGANIZATION_ID. Variabele: HELDER_SIGN_PUBLISHER — de
+# naam die precies op het certificaat staat, want dat is de uitgever die electron-updater bij elke
+# update controleert.
 # In SignPath aan te maken: project `helder`, signing policy `release-signing` en twee
 # artifact configurations — `helder-app` (de losse bestanden uit win-unpacked) en
 # `helder-installer` (de NSIS-installer). Zie docs/code-signing-policy.md.
@@ -40,17 +44,24 @@ jobs:
       - run: npm ci
 
       # De uitgever in app-update.yml hoort bij de handtekening: electron-updater vergelijkt de
-      # naam van de ondertekenaar met dit veld. Zet hem daarom alleen als er echt ondertekend
-      # wordt — een ongetekende build met deze naam zou elke volgende update afkeuren.
+      # naam van de ondertekenaar met dit veld. Die naam staat daarom in de repository-variabele
+      # HELDER_SIGN_PUBLISHER en niet in dit bestand: bij een betaald abonnement is het de
+      # organisatie op het certificaat, niet de Foundation. Ontbreekt de variabele terwijl er wel
+      # een token is, dan stoppen we hier — een verkeerde naam keurt elke volgende update af.
       - name: Uitgever van de ondertekening vastleggen
         shell: bash
         run: |
-          if [[ -n "$SIGNPATH_API_TOKEN" ]]; then
-            echo "HELDER_SIGN_PUBLISHER=SignPath Foundation" >> "$GITHUB_ENV"
-            echo "Ondertekend door SignPath Foundation; uitgever vastgezet in app-update.yml."
-          else
+          if [[ -z "$SIGNPATH_API_TOKEN" ]]; then
             echo "::warning title=Ongetekende release::SIGNPATH_API_TOKEN ontbreekt, dus deze release wordt ongetekend gepubliceerd en Windows kan waarschuwen."
+            exit 0
           fi
+          uitgever="${{ vars.HELDER_SIGN_PUBLISHER }}"
+          if [[ -z "$uitgever" ]]; then
+            echo "::error title=Uitgever ontbreekt::Er is wel een SIGNPATH_API_TOKEN, maar de variabele HELDER_SIGN_PUBLISHER is niet gezet. Zet die op de naam die precies op het certificaat staat (Settings -> Secrets and variables -> Actions -> Variables)."
+            exit 1
+          fi
+          echo "HELDER_SIGN_PUBLISHER=$uitgever" >> "$GITHUB_ENV"
+          echo "Ondertekend; uitgever \"$uitgever\" vastgezet in app-update.yml."
 
       - name: Versie en tag kloppen?
         shell: bash

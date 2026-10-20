@@ -1,9 +1,9 @@
 // Helder — boekhouden zonder ruis
 // Copyright (C) 2026 Helder-auteurs
-// SPDX-License-Identifier: AGPL-3.0-only
+// SPDX-License-Identifier: GPL-3.0-only
 //
 // Dit bestand is vrije software: je mag het verspreiden en/of aanpassen onder de
-// voorwaarden van de GNU Affero General Public License, versie 3. Zie LICENSE.
+// voorwaarden van de GNU General Public License, versie 3. Zie LICENSE.
 
 // Helder als gewone Windows-app. De gebouwde bestanden uit dist/ worden via een eigen
 // app://-adres geserveerd, zodat de pagina zich als normale website gedraagt: localStorage
@@ -327,13 +327,13 @@ function maakMenu() {
         },
         { type: "separator" },
         {
-          label: "Licentie (AGPL-3.0)",
+          label: "Licentie (GPL-3.0)",
           click: async () => {
             const licentie = path.join(process.resourcesPath, "LICENSE");
             const antwoord = await dialog.showMessageBox({
               type: "info",
               title: "Licentie",
-              message: "Helder is vrije software onder de GNU AGPL-3.0",
+              message: "Helder is vrije software onder de GNU GPL-3.0",
               detail:
                 "Je mag Helder gebruiken, aanpassen en verspreiden. Verspreid je een aangepaste versie, dan moet de broncode onder dezelfde licentie openbaar zijn. De volledige tekst staat naast het programma in LICENSE.",
               buttons: ["Licentietekst openen", "Sluiten"],

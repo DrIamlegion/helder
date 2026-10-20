@@ -1,14 +1,24 @@
 # Code-signingbeleid
 
-Dit is het ondertekeningsbeleid van Helder, zoals SignPath Foundation dat van deelnemende
-open-sourceprojecten vraagt. Het beschrijft wat er wordt ondertekend, hoe vastgesteld wordt dat
-een build echt uit deze repository komt, en wie een release goedkeurt.
+Dit is het ondertekeningsbeleid van Helder. Het beschrijft wat er ondertekend wordt, hoe vastgesteld
+wordt dat een build echt uit deze repository komt, en wie een release goedkeurt. Het geldt zodra er
+ondertekend wordt; op dit moment is dat niet het geval.
 
-> Free code signing provided by SignPath.io, certificate by SignPath Foundation.
+## Status: nog niet ondertekend
 
-Die regel staat ook op de homepage en op de downloadpagina van het project —
-[README → Code signing policy](../README.md#code-signing-policy) en [download.md](download.md) —
-want de Foundation vraagt dat het beleid vanaf beide te vinden is.
+De releases van Helder zijn **niet ondertekend**. Windows noemt de uitgever daarom "onbekend" en kan
+bij de eerste start waarschuwen; dat staat ook zo op [download.md](download.md) en in de
+[README → Ondertekening](../README.md#ondertekening-code-signing).
+
+De gratis route via de SignPath Foundation is op 20 oktober 2026 afgewezen: de Foundation ondertekent
+alleen projecten met aantoonbare publieke bekendheid, en die had dit project op dat moment (twee
+dagen oud) niet. Wat er verstuurd is en wat er terugkwam staat in
+[signpath-aanvraag-log.md](signpath-aanvraag-log.md). Ondertekening blijft mogelijk met een betaald
+SignPath-abonnement of een eigen certificaat; de pijplijn in deze repository staat daar klaar voor.
+
+Zolang er niets ondertekend is, staat er ook geen claim op de homepage, de downloadpagina of de
+releasepagina's dat SignPath Foundation dit project ondertekent. `npm run test:documentatie` bewaakt
+dat: die regel hoort pas terug te komen als er weer een goedgekeurde aanvraag of een abonnement is.
 
 ## Rollen en hun leden
 
@@ -22,7 +32,8 @@ drie vallen bij hem samen:
   gaan door dezelfde CI (licentieheaders, release-opmerkingen, typecheck, build, btw-test in de
   echte app, hashcontrole).
 - **Approvers**: [@DrIamlegion](https://github.com/DrIamlegion) — keurt elke ondertekeningsaanvraag
-  in het SignPath-portaal goed.
+  goed voordat er ondertekend wordt. Bij een betaald SignPath-abonnement is dat in het
+  SignPath-portaal, net als bij de Foundation het geval zou zijn.
 
 Alle leden gebruiken MFA op GitHub en op SignPath; dat is een voorwaarde om de repository te
 kunnen publiceren en om een aanvraag te kunnen indienen.
@@ -35,12 +46,18 @@ Releases.
 
 ## Uitgever en certificaat
 
-- Helder wordt ondertekend met het certificaat van **SignPath Foundation**. Windows toont die
-  naam als uitgever; het is niet de naam van de individuele ontwikkelaar of van een bedrijf.
-- De privésleutel staat in de HSM van SignPath en komt nooit op een ontwikkelmachine of in een
-  CI-secret terecht.
-- Dezelfde uitgeversnaam (`SignPath Foundation`) staat in `app-update.yml`, zodat
-  `electron-updater` updates kan verifiëren.
+Er is op dit moment geen uitgever: er wordt niets ondertekend. Zodra dat wel gebeurt, geldt het
+volgende.
+
+- De uitgever is de naam op het certificaat waarmee ondertekend wordt: bij een betaald
+  SignPath-abonnement de organisatie achter dat abonnement, bij een eigen certificaat de naam
+  daarvan. Windows toont die naam; het is niet de naam van de individuele ontwikkelaar.
+- De privésleutel blijft in de HSM van de certificaatverlener of op een token, en komt nooit op een
+  ontwikkelmachine of in een CI-secret terecht.
+- Diezelfde naam staat in `app-update.yml`, zodat `electron-updater` updates kan verifiëren. De
+  release-workflow leest hem uit de repository-variabele `HELDER_SIGN_PUBLISHER` en stopt als die
+  ontbreekt terwijl er wél een token is: een verkeerde naam daar betekent dat elke volgende update
+  wordt afgekeurd.
 
 ## Wat wordt ondertekend
 
@@ -77,10 +94,10 @@ De twee artifact configurations staan als XML in de repository:
 [helder-app](signpath/artifact-configurations/helder-app.xml) ondertekent `Helder.exe`,
 [helder-installer](signpath/artifact-configurations/helder-installer.xml) ondertekent
 `Helder-Setup-*.exe`. In beide staat één ondertekeningsopdracht, op ons eigen bestand, en leggen
-ze de metadata vast die de Foundation eist (productnaam gelijk aan de projectnaam, productversie
-in elke build dezelfde). Het pad van de installer is een patroon, geen versienummer, zodat de
-configuratie niet bij elke release mee hoeft te veranderen. Hoe je ze in het portaal zet, staat in
-[signpath-inrichting.md](signpath-inrichting.md).
+ze de metadata vast die SignPath van een ondertekende binary eist (productnaam gelijk aan de
+projectnaam, productversie in elke build dezelfde). Het pad van de installer is een patroon, geen
+versienummer, zodat de configuratie niet bij elke release mee hoeft te veranderen. Hoe je ze in het
+portaal zet, staat in [signpath-inrichting.md](signpath-inrichting.md).
 
 ## Hoe een build wordt geverifieerd
 
@@ -105,17 +122,20 @@ configuratie niet bij elke release mee hoeft te veranderen. Hoe je ze in het por
 ## Controleren door gebruikers
 
 ```powershell
-Get-AuthenticodeSignature .\Helder-Setup-0.1.7.exe | Format-List Status, SignerCertificate
+Get-AuthenticodeSignature .\Helder-Setup-<versie>.exe | Format-List Status, SignerCertificate
 ```
 
 Of in Verkenner: rechtsklik het bestand → *Eigenschappen* → tab *Digitale handtekeningen*.
-Een geldige handtekening toont **SignPath Foundation** als ondertekenaar en een tijdstempel.
+
+Op dit moment meldt die controle **NotSigned**, en dat klopt: er is geen certificaat. Heeft een
+release later wél een handtekening, dan toont dezelfde controle *Valid*, de uitgever van dat
+certificaat en een tijdstempel — dezelfde naam die in de release-opmerkingen staat.
 
 ## Licentie en broncode
 
-Helder is vrije software onder de [GNU AGPL-3.0](../LICENSE). De volledige broncode van elke
+Helder is vrije software onder de [GNU GPL-3.0](../LICENSE). De volledige broncode van elke
 uitgebrachte versie staat in deze repository, zodat de binaries controleerbaar uit de bron
-voortkomen — een voorwaarde om voor deze gratis ondertekeningsroute in aanmerking te komen.
+voortkomen — en zodat een gebruiker zelf kan bouwen wat hier wordt gepubliceerd.
 
 ## Contact
 

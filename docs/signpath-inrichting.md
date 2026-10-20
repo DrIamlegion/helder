@@ -1,8 +1,11 @@
 # De inrichting in SignPath
 
-De aanvraag is verstuurd en de configuraties staan in de repository. Wat hieronder staat is het
-werk in het SignPath-portaal zodra het account er is: een half uur, en daarna kan de eerste
-ondertekende release eruit.
+De configuraties staan in de repository. Wat hieronder staat is het werk in het SignPath-portaal
+zodra het account er is: een half uur, en daarna kan de eerste ondertekende release eruit. Dat
+account komt er op twee manieren — met een **betaald abonnement** (de route die overblijft nu de
+gratis aanvraag op 20 oktober 2026 is afgewezen, zie [signpath-aanvraag-log.md](signpath-aanvraag-log.md))
+of met een **goedgekeurde aanvraag bij de Foundation**. De inrichting is in beide gevallen hetzelfde;
+alleen het certificaat verschilt.
 
 De twee configuraties staan klaar als XML:
 
@@ -20,19 +23,24 @@ configuratie — houd ze dus precies zo.
 1. **Project aanmaken**: naam `Helder`, slug `helder`, met de repository-URL
    `https://github.com/DrIamlegion/helder`. Voeg GitHub toe als *trusted build system*
    (GitHub.com) en koppel het aan het project; zonder dat weigert SignPath een aanvraag uit deze
-   workflow.
-2. **Signing policy** `release-signing` met het certificaat van de Foundation. Zet de
-   goedkeuring op handmatig: de voorwaarden van de Foundation vragen dat elke release door een
-   mens wordt goedgekeurd voordat er ondertekend wordt.
+   workflow.2. **Signing policy** `release-signing` met het bijbehorende certificaat: bij een betaald abonnement
+dat van je eigen organisatie, bij de Foundation dat van de Foundation. Zet de goedkeuring op
+handmatig: elke release hoort door een mens te worden goedgekeurd voordat er ondertekend wordt,
+en zo staat het ook in [code-signing-policy.md](code-signing-policy.md).
+
+   De naam op dat certificaat is de uitgever die Windows straks toont. Zet hem in de
+   repository-variabele `HELDER_SIGN_PUBLISHER`; de workflow weigert te ondertekenen als die
+   variabele ontbreekt terwijl er wel een token is, want een verkeerde naam in `app-update.yml`
+   laat elke volgende update stranden.
 3. **Artifact configurations** toevoegen onder het project (knop *Add* → zelf XML opgeven) en de
    inhoud van de twee bestanden plakken. Gebruik de slugs `helder-app` en `helder-installer`.
    Het portaal kan ook zelf een configuratie uit een proefartefact genereren; dat mag, maar houd
    dan dezelfde afspraken aan: één ondertekend bestand per configuratie, en de
-   metadata-restricties hieronder.
-4. **Secrets zetten** onder *Settings → Secrets and variables → Actions*:
+   metadata-restricties hieronder.4. **Secrets en variabele zetten** onder *Settings → Secrets and variables → Actions*:
    `SIGNPATH_API_TOKEN` (een gebruiker met submitter-recht op het project) en
-   `SIGNPATH_ORGANIZATION_ID` (het nummer van de organisatie, te vinden in het portaal). Zonder
-   die twee bouwt de workflow ongetekend door en staat er een waarschuwing in de samenvatting.
+   `SIGNPATH_ORGANIZATION_ID` (het nummer van de organisatie, te vinden in het portaal) als secrets,
+   en `HELDER_SIGN_PUBLISHER` als variabele. Zonder de secrets bouwt de workflow ongetekend door en
+   staat er een waarschuwing in de samenvatting.
 5. **Een nieuwe tag pushen.** De workflow zet de versie uit `package.json` in `VERSIE` en geeft
    die als parameter `version` mee aan beide ondertekeningsaanvragen. Ondertekenen verandert de
    bytes, dus daarna wordt `latest.yml` opnieuw gemaakt en controleert

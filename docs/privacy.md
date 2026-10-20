@@ -90,6 +90,6 @@ komen in [CHANGELOG.md](../CHANGELOG.md) te staan.
 ## Licentie
 
 Dit beleid is van toepassing op Helder, vrije software onder de
-[GNU AGPL-3.0](../LICENSE). De app gebruikt één externe bibliotheek voor QR-codes
+[GNU GPL-3.0](../LICENSE). De app gebruikt één externe bibliotheek voor QR-codes
 ([qrcode-generator](https://github.com/kazuhikoarase/qrcode-generator), MIT), die volledig
 lokaal rekent en geen verbinding maakt.

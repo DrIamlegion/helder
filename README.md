@@ -238,11 +238,11 @@ Wil je Helder als gewoon Windows-programma met een installer, dan bouw je die ze
   Electron zit erin). Dubbelklikken installeert Helder **per gebruiker** in
   `%LOCALAPPDATA%\Programs\Helder` — geen beheerdersrechten nodig. Je krijgt een pictogram in het
   startmenu en op het bureaublad, en in *Apps en onderdelen* staat een uninstaller.
-- De installer is **nog niet ondertekend**: de gratis route via SignPath Foundation staat klaar
-  in de release-workflow, maar is pas actief zodra de repository openbaar is en het
-  SignPath-project is goedgekeurd. Tot die tijd zegt SmartScreen de eerste keer "Windows heeft uw
-  pc beschermd"; kies *Meer informatie* → *Toch uitvoeren*. Wat er nog moet gebeuren staat in
-  de aanvraagchecklist onder *Ondertekening (code signing)*.
+- De installer is **niet ondertekend**: de gratis route via SignPath Foundation is op 20 oktober
+  2026 afgewezen (het project was te jong en te onbekend), en een betaald certificaat is er nog
+  niet. Windows zegt de eerste keer daarom "Windows heeft uw pc beschermd"; kies *Meer informatie*
+  → *Toch uitvoeren*. Hoe je dat zelf controleert, en wat er nodig is om er wél een handtekening op
+  te krijgen, staat onder *Ondertekening (code signing)*.
 - De app start direct op, zonder server en zonder internet. Je administratie staat in
   `%APPDATA%\Helder` en blijft ook na verwijderen bewaard (`deleteAppDataOnUninstall: false`).
 - Het venster opent op een maat die bij je scherm past: hoogstens 1360 × 900, en kleiner als je
@@ -325,19 +325,33 @@ Drie routes (prijzen peildatum oktober 2026, controleer ze voor aankoop):
 3. **EV-certificaat** — alleen zinvol als je het al hebt of om andere redenen; geen
    SmartScreen-voordeel meer.
 
-### Gekozen gratis route: AGPL-3.0 + SignPath Foundation
+### De gratis route: GPL-3.0 + SignPath Foundation
 
 Er bestaat **geen gratis publiek vertrouwd Authenticode-certificaat** voor een gesloten app die
 je zelf als EXE verspreidt: sinds 1 juni 2023 moet de privésleutel op een token of HSM staan, en
 Microsoft vertrouwt alleen uitgevers die een CA heeft gevalideerd. De twee routes die nul euro
-kosten vragen iets anders van je — Helder gaat voor de eerste:
+kosten vragen iets anders van je; Helder vroeg de eerste aan.
 
-1. **Open source onder AGPL-3.0, ondertekend door SignPath Foundation.** SignPath ondertekent
+1. **Open source onder GPL-3.0, ondertekend door SignPath Foundation.** SignPath ondertekent
    open-sourceprojecten gratis met een sleutel in hun HSM; de handtekening staat op naam van
    *SignPath Foundation*. Voorwaarden: één OSI-goedgekeurde licentie voor alle componenten
    (geen dual licensing, geen proprietary delen), een publieke repository met verifieerbare
-   builds, actief onderhoud, MFA en handmatige goedkeuring per release
-   ([SignPath Foundation](https://signpath.org/), [voorwaarden](https://signpath.org/terms.html)).
+   builds, actief onderhoud, MFA en handmatige goedkeuring per release — en **aantoonbare publieke
+   bekendheid** ([SignPath Foundation](https://signpath.org/), [voorwaarden](https://signpath.org/terms.html)).
+
+   **Die aanvraag is op 20 oktober 2026 afgewezen**, met precies dat laatste als reden: het project
+   was twee dagen oud en had geen sterren, forks, externe vermeldingen of downloads om te laten
+   zien. De brief staat in [docs/signpath-aanvraag-log.md](docs/signpath-aanvraag-log.md). Twee
+   dingen kunnen alsnog:
+
+   - **Een betaald SignPath-abonnement** ([uitleg van SignPath](https://docs.signpath.io/change-subscription)).
+     Zelfde portaal, zelfde actie in de workflow, ander certificaat: dat staat op naam van de
+     organisatie achter het abonnement, dus `HELDER_SIGN_PUBLISHER` moet precies die naam krijgen.
+   - **Opnieuw aanvragen bij de Foundation** zodra de signalen er zijn; de brief noemt dat zelf als
+     mogelijkheid. Welke signalen dat zijn staat in
+     [docs/signpath-aanvraag.md](docs/signpath-aanvraag.md#verwachting), en `npm run signalen` legt
+     ze per dag vast in [docs/signpath-signalen.json](docs/signpath-signalen.json).
+
 2. **Als MSIX via de Microsoft Store publiceren** — de inschrijving kost in de nieuwe
    inschrijfflow niets, voor een persoonlijk én een bedrijfsaccount; Microsoft ondertekent na
    review en de Store doet dan de updates (dus zonder `electron-updater`). Dit is de **enige
@@ -348,7 +362,7 @@ kosten vragen iets anders van je — Helder gaat voor de eerste:
 
 Wat er in deze repo al voor klaarstaat:
 
-- [LICENSE](LICENSE) (AGPL-3.0) en `"license": "AGPL-3.0-only"` in [package.json](package.json);
+- [LICENSE](LICENSE) (GPL-3.0) en `"license": "GPL-3.0-only"` in [package.json](package.json);
   de licentietekst wordt meegeleverd in de installatiemap en is via **Help → Licentie** te openen.
 - [docs/code-signing-policy.md](docs/code-signing-policy.md) — het ondertekeningsbeleid dat
   SignPath van deelnemers vraagt (wat wordt ondertekend, hoe builds geverifieerd worden,
@@ -367,51 +381,56 @@ Wat er in deze repo al voor klaarstaat:
 
 ### Code signing policy
 
-SignPath vraagt dat het ondertekeningsbeleid op de homepage en op de downloadpagina staat, met
-de letterlijke regel hieronder. Die regel staat daarom hier en op
-[docs/download.md](docs/download.md), met een link naar het beleid zelf:
-[docs/code-signing-policy.md](docs/code-signing-policy.md).
+De releases zijn **niet ondertekend**, dus Windows toont "onbekende uitgever". Dat staat ook zo op
+[docs/download.md](docs/download.md). Een claim dat SignPath Foundation dit project ondertekent zou
+nu onwaar zijn en staat daarom niet meer in deze README, niet op de downloadpagina en niet in de
+voet onder de releasepagina's; `npm run test:documentatie` laat de CI rood worden als zo'n claim
+terugkomt zonder dat er weer een goedgekeurde aanvraag of een abonnement is.
 
-> Free code signing provided by SignPath.io, certificate by SignPath Foundation.
+Zodra er wél ondertekend wordt — via een betaald SignPath-abonnement of een eigen certificaat —
+geldt het beleid in [docs/code-signing-policy.md](docs/code-signing-policy.md): wat er ondertekend
+wordt, hoe een build geverifieerd wordt en wie een release goedkeurt.
 
-**Rollen en hun leden.** Helder heeft één maintainer, dus de drie rollen die de Foundation
-vraagt vallen bij hem samen: auteurs/committers, reviewers en approvers zijn
+**Rollen en hun leden.** Helder heeft één maintainer, dus de drie rollen die SignPath vraagt vallen
+bij hem samen: auteurs/committers, reviewers en approvers zijn
 [@DrIamlegion](https://github.com/DrIamlegion). Elke pull request van buiten wordt door hem
-beoordeeld voordat hij in `main` komt, en elke tag wordt door hem in het SignPath-portaal
-goedgekeurd voordat er ondertekend wordt. MFA staat verplicht aan op zowel GitHub als SignPath.
+beoordeeld voordat hij in `main` komt, en elke tag wordt door hem goedgekeurd voordat er ondertekend
+wordt. MFA staat verplicht aan op GitHub, en op SignPath zodra dat account er is.
 
 **Privacy.** Helder bewaart je administratie lokaal en stuurt die niet door; de enige verbinding
 die de app zelf maakt is de updatecontrole bij GitHub Releases. Dat staat precies beschreven in
 [docs/privacy.md](docs/privacy.md).
 
-### De aanvraag in stappen
+### Als je gaat ondertekenen
 
-Dit is de hele fix voor de waarschuwing; alleen jij kunt deze stappen doen, want er hangen een
-account, een MFA-controle en een handmatige goedkeuring per release aan.
+Deze stappen zijn niet nodig om releases te blijven uitbrengen — zonder secrets bouwt de workflow
+ongetekend door, met een waarschuwing in de samenvatting. Ze gelden zodra je een betaald
+SignPath-abonnement neemt, een eigen certificaat koopt, of een nieuwe aanvraag bij de Foundation
+goedkeuring krijgt. Alleen jij kunt ze doen: er hangen een account, een MFA-controle en een
+handmatige goedkeuring per release aan.
 
-1. **Repository openbaar op GitHub.** SignPath controleert de bron én dat de build uit die bron
-   komt; een privé-repository komt niet in aanmerking.
-2. **Aanvragen** via [signpath.org](https://signpath.org/) met de repository-URL, de licentie
-   (AGPL-3.0) en de pagina waar de releases te downloaden zijn. Doe dit als er al versies
-   downloadbaar zijn: SignPath weegt de reputatie van het project mee en kan een prille
-   repository afwijzen. Reken op weken, niet op dagen. De antwoorden per formulierveld staan in
-   [docs/signpath-aanvraag.md](docs/signpath-aanvraag.md); wat er bij een eerdere poging is
-   verstuurd staat in [docs/signpath-aanvraag-log.md](docs/signpath-aanvraag-log.md), zodat een
-   tweede aanvraag kan laten zien wat er sindsdien is veranderd.
-3. **Inrichten in SignPath** (na goedkeuring): een organisatie, project `helder` met GitHub als
-   *trusted build system*, signing policy `release-signing`, en twee artifact configurations —
-   `helder-app` (alleen `Helder.exe` uit `win-unpacked`) en `helder-installer` (alleen
+1. **Zorg voor een certificaat.** Een betaald SignPath-abonnement, een eigen OV-certificaat, of een
+   goedgekeurde aanvraag bij de Foundation. Bij de Foundation hoort het formulier uit
+   [docs/signpath-aanvraag.md](docs/signpath-aanvraag.md); wat er bij eerdere pogingen verstuurd is
+   staat in [docs/signpath-aanvraag-log.md](docs/signpath-aanvraag-log.md), zodat een volgende
+   aanvraag kan laten zien wat er sindsdien is veranderd.
+2. **Inrichten in SignPath**: een organisatie, project `helder` met GitHub als *trusted build
+   system*, signing policy `release-signing`, en twee artifact configurations — `helder-app`
+   (alleen `Helder.exe` uit `win-unpacked`) en `helder-installer` (alleen
    `Helder-Setup-*.exe`). De XML staat klaar in
    [docs/signpath/artifact-configurations](docs/signpath/artifact-configurations/helder-app.xml)
    en de portalstappen staan in [docs/signpath-inrichting.md](docs/signpath-inrichting.md). Alleen
    onze eigen binary wordt ondertekend, niet de DLL's van Electron. Waarom dat zo moet, staat in
    [docs/code-signing-policy.md](docs/code-signing-policy.md#wat-wordt-ondertekend).
-4. **Secrets zetten**: `SIGNPATH_API_TOKEN` (een gebruiker met submitter-recht in het project) en
-   `SIGNPATH_ORGANIZATION_ID`, onder *Settings → Secrets and variables → Actions*.
-5. **Nieuwe tag pushen en de aanvraag goedkeuren** in het SignPath-portaal. Zodra de secrets er
-   zijn, zet de workflow `HELDER_SIGN_PUBLISHER=SignPath Foundation` in `app-update.yml`, zodat
-   `electron-updater` de uitgever van elke update controleert. Ontbreken de secrets, dan meldt de
-   workflow in de samenvatting dat de release ongetekend is.
+3. **Secrets en variabelen zetten** onder *Settings → Secrets and variables → Actions*:
+   `SIGNPATH_API_TOKEN` (een gebruiker met submitter-recht in het project) en
+   `SIGNPATH_ORGANIZATION_ID` als secrets, en `HELDER_SIGN_PUBLISHER` als **variabele** met de naam
+   die precies op het certificaat staat. Zonder die variabele stopt de workflow zodra er wél een
+   token is: een uitgever in `app-update.yml` die nergens bij hoort, keurt elke volgende update af.
+4. **Nieuwe tag pushen en de aanvraag goedkeuren** in het SignPath-portaal. De workflow zet de
+   uitgever uit `HELDER_SIGN_PUBLISHER` in `app-update.yml`, zodat `electron-updater` de uitgever van
+   elke update controleert, en schrijft in de release-opmerkingen met welk certificaat er ondertekend
+   is.
 
 Hoe je de eerste push doet — met de controlelijst vooraf, de repo-instellingen en de eerste
 tag — staat stap voor stap in [docs/publicatie.md](docs/publicatie.md).
@@ -547,17 +566,18 @@ keer de nieuwste installer downloaden en installeren lost dat op — daarna gaat
 
 **Nieuwe versie uitbrengen** is dan: versie in [package.json](package.json) ophogen, de sectie in
 [CHANGELOG.md](CHANGELOG.md) schrijven, committen, `git tag v<versie>` en de tag pushen. De
-workflow bouwt, ondertekent, controleert en publiceert; oudere installaties pikken hem vanzelf op.
+workflow bouwt, controleert en publiceert — en ondertekent als de secrets en de uitgever ervoor
+gezet zijn. Oudere installaties pikken hem vanzelf op.
 
 De **beschrijving op de releasepagina** komt uit dezelfde changelogpunten: de workflow draait
 [scripts/release-body.mjs](scripts/release-body.mjs) en zet de uitkomst als `body_path` op de
 release. Zo leest een bezoeker op GitHub hetzelfde als een gebruiker in de update-kaart. Lokaal
 de tekst bekijken kan met `npm run release:body` — dat schrijft `release/release-body.md`.
-Onderaan staat een vaste voet met **Code signing policy**, de regel van de Foundation en de links
-naar het [beleid](docs/code-signing-policy.md) en de [downloadpagina](docs/download.md), zodat ook
-de releasepagina's aan de voorwaarden voldoen. Die voet zegt er eerlijk bij of de release
-ondertekend is: `HELDER_SIGN_PUBLISHER` bestaat alleen als er echt ondertekend wordt, dus zonder
-SignPath-secrets staat er "nog niet ondertekend" in plaats van een claim die niet klopt.
+Onderaan staat een vaste voet met **Code signing policy** en de links naar het
+[beleid](docs/code-signing-policy.md) en de [downloadpagina](docs/download.md). Die voet zegt er
+eerlijk bij of de release ondertekend is: `HELDER_SIGN_PUBLISHER` bestaat alleen als er echt
+ondertekend wordt, dus zonder SignPath-secrets staat er "nog niet ondertekend" in plaats van een
+claim die niet klopt.
 
 **Lokaal testen zonder host**: start een statische server in `release/` en geef de app een ander
 kanaal mee. `HELDER_UPDATE_URL=http://127.0.0.1:8931` wijst de updater naar die server en
@@ -586,21 +606,21 @@ Helder is ook te installeren als web-app, zonder installer en zonder server:
 
 ## Licentie
 
-Helder is vrije software onder de **GNU Affero General Public License v3.0** ([LICENSE](LICENSE)).
+Helder is vrije software onder de **GNU General Public License v3.0** ([LICENSE](LICENSE)).
 Kort gezegd:
 
 - Je mag Helder gebruiken, bestuderen, aanpassen en verspreiden, ook commercieel.
 - Verspreid je een aangepaste versie, dan moet de broncode daarvan onder dezelfde licentie
   openbaar zijn, inclusief de wijzigingen.
-- Bied je een aangepaste versie als netwerkdienst aan, dan geldt dezelfde plicht voor gebruikers
-  van die dienst.
+- Zet je een aangepaste versie als dienst voor anderen online, dan hoef je die broncode niet te
+  publiceren: de netwerkclausule van de AGPL, die dat wél verplichtte, zit bewust niet in de GPL.
 - Er is geen garantie: de software wordt geleverd "as is".
 
 De volledige tekst gaat mee met de installer (`resources/LICENSE`) en is in de app te openen via
-**Help → Licentie (AGPL-3.0)**. QR-codes worden gemaakt met
+**Help → Licentie (GPL-3.0)**. QR-codes worden gemaakt met
 [qrcode-generator](https://github.com/kazuhikoarase/qrcode-generator) (MIT).
 
-Elk bronbestand begint met een korte header met de SPDX-regel `AGPL-3.0-only`:
+Elk bronbestand begint met een korte header met de SPDX-regel `GPL-3.0-only`:
 
 ```bash
 npm run license:add     # header toevoegen waar hij ontbreekt (idempotent)
@@ -609,7 +629,7 @@ npm run license:check   # faalt als een bronbestand de header mist (handig in CI
 
 ## Bijdragen
 
-- Bijdragen vallen onder dezelfde AGPL-3.0-licentie; door een pull request in te dienen ga je
+- Bijdragen vallen onder dezelfde GPL-3.0-licentie; door een pull request in te dienen ga je
   daarmee akkoord.
 - Draai vóór een pull request `npm run ci`: dezelfde controles als de CI-workflow, in dezelfde
   volgorde — licentieheaders, release-opmerkingen, de documentatie-eisen van SignPath, de
@@ -620,9 +640,9 @@ npm run license:check   # faalt als een bronbestand de header mist (handig in CI
   de btw-test in de echte app door; dat duurt ongeveer een minuut. De test krijgt een eigen tijdelijke profielmap mee, dus je
   administratie blijft buiten schot en de app mag gewoon openstaan.
 - Elke pull request draait [CI](.github/workflows/ci.yml): licentiecontrole,
-  release-opmerkingen, de **documentatie-eisen van SignPath** (`scripts/test-documentatie.mjs`:
-  de regel van de Foundation, de teamrollen, de links naar download- en privacypagina en of die
-  links bestaan), de **ondertekeningspijplijn** (`scripts/test-signpath.mjs`: geen eigen zip,
+  release-opmerkingen, de **documentatiecontrole** (`scripts/test-documentatie.mjs`: geen claim van
+  een handtekening die er niet is, de teamrollen en MFA, de links naar download- en privacypagina en
+  of die links bestaan), de **ondertekeningspijplijn** (`scripts/test-signpath.mjs`: geen eigen zip,
   verplichte invoer van de SignPath-actie, terugzetten met controle), de **signalen**
   (`scripts/test-signpath-signalen.mjs`: het telwerk achter de cijfers bij een aanvraag —
   concept-releases, bots en eigen issues tellen niet als reputatie), typecheck en build, de
@@ -632,8 +652,8 @@ npm run license:check   # faalt als een bronbestand de header mist (handig in CI
   elkaar lopen — bouw dus altijd opnieuw voordat je pusht. De btw-test staat vóór de inpakstap,
   zodat je die fout meteen ziet.
 - Nieuwe versies: hoog de versie op, schrijf de sectie in [CHANGELOG.md](CHANGELOG.md) en tag
-  `v<versie>`; de release-workflow draait eerst de btw-test, bouwt en ondertekent daarna, en
-  publiceert pas als alles groen is (zie *Ondertekening*). Een tag met een gebroken btw-regel
+  `v<versie>`; de release-workflow draait eerst de btw-test, bouwt en ondertekent daarna (als dat
+  ingesteld is), en publiceert pas als alles groen is (zie *Ondertekening*). Een tag met een gebroken btw-regel
   komt er dus niet doorheen.
 - Controleer na een build dat het pakket echt bij de commit hoort:
   `npm run verify:build -- --tag v<versie>` (of `--app-map` om een bestaande installatie te

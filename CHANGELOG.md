@@ -4,6 +4,16 @@ Wat er per versie verandert, nieuwste bovenaan. Dit bestand is de bron: de bouw 
 notities van de huidige versie in `latest.yml`, en de app toont ze in de update-kaart
 voordat je een update installeert.
 
+## 0.1.12 — 20 oktober 2026
+
+- Helder staat nu onder de **GPL-3.0** in plaats van de AGPL-3.0. Wat je mag blijft hetzelfde:
+  gebruiken, bestuderen, aanpassen en verspreiden, ook commercieel, en de broncode van een
+  aangepaste versie blijft openbaar. Wat vervalt is de netwerkclausule: zet je een aangepaste
+  versie als dienst online, dan hoef je die broncode niet te publiceren.
+- Versies tot en met 0.1.11 blijven onder de AGPL-3.0 vallen; die licentie kun je achteraf niet
+  veranderen. De licentietekst in de installatiemap en onder **Help → Licentie** is de GPL-3.0,
+  en elk bronbestand draagt die SPDX-regel.
+
 ## 0.1.11 — 19 oktober 2026
 
 - Aan de app zelf verandert niets: deze uitgave test de vernieuwde release-pijplijn, waarin de
